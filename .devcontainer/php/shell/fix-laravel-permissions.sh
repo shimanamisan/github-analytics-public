@@ -20,7 +20,7 @@ echo "Laravel project found at: $LARAVEL_PATH"
 # storageディレクトリの権限修正
 if [ -d "$LARAVEL_PATH/storage" ]; then
     echo "Fixing storage directory permissions..."
-    chown -R user01:www-data "$LARAVEL_PATH/storage"
+    chown -R h-nishihara:www-data "$LARAVEL_PATH/storage"
     chmod -R 775 "$LARAVEL_PATH/storage"
     
     # ログディレクトリが存在しない場合は作成
@@ -30,27 +30,27 @@ if [ -d "$LARAVEL_PATH/storage" ]; then
     fi
     
     # ログディレクトリの権限設定
-    chown -R user01:www-data "$LARAVEL_PATH/storage/logs"
+    chown -R h-nishihara:www-data "$LARAVEL_PATH/storage/logs"
     chmod -R 775 "$LARAVEL_PATH/storage/logs"
     
     echo "Storage permissions fixed successfully"
 else
     echo "Storage directory not found, creating it..."
     mkdir -p "$LARAVEL_PATH/storage/logs"
-    chown -R user01:www-data "$LARAVEL_PATH/storage"
+    chown -R h-nishihara:www-data "$LARAVEL_PATH/storage"
     chmod -R 775 "$LARAVEL_PATH/storage"
 fi
 
 # bootstrap/cacheディレクトリの権限修正
 if [ -d "$LARAVEL_PATH/bootstrap/cache" ]; then
     echo "Fixing bootstrap/cache directory permissions..."
-    chown -R user01:www-data "$LARAVEL_PATH/bootstrap/cache"
+    chown -R h-nishihara:www-data "$LARAVEL_PATH/bootstrap/cache"
     chmod -R 775 "$LARAVEL_PATH/bootstrap/cache"
     echo "Bootstrap/cache permissions fixed successfully"
 else
     echo "Bootstrap/cache directory not found, creating it..."
     mkdir -p "$LARAVEL_PATH/bootstrap/cache"
-    chown -R user01:www-data "$LARAVEL_PATH/bootstrap/cache"
+    chown -R h-nishihara:www-data "$LARAVEL_PATH/bootstrap/cache"
     chmod -R 775 "$LARAVEL_PATH/bootstrap/cache"
 fi
 

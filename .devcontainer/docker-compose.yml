@@ -6,13 +6,13 @@ volumes:
 
 services:
   nginx-proxy:
-    container_name: nginx-proxy-GitHub-Traffic-API
+    container_name: Nginx-Proxy-GitHub-Traffic-API
     build:
       context: ./proxy
       dockerfile: ./Dockerfile
     image: nginx-proxy-github-traffic-api:1.0
     ports:
-      - 80:80
+      - 8090:80
     volumes:
       - /var/run/docker.sock:/tmp/docker.sock:ro
 

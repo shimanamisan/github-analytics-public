@@ -34,6 +34,8 @@ COPY ./cron/h-nishihara /etc/cron.d/cron
 COPY ./supervisord/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 # スクリプトをコンテナにコピー
 COPY ./shell/check_artisan.sh /usr/local/bin/check_artisan
+COPY ./shell/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+COPY ./shell/fix-laravel-permissions.sh /usr/local/bin/fix-laravel-permissions.sh
 
 WORKDIR /workspace
 
@@ -51,6 +53,11 @@ RUN useradd -m -s /bin/bash h-nishihara && \
     # check_artisanの権限を変更
     chown h-nishihara:h-nishihara /usr/local/bin/check_artisan && \
     chmod +x /usr/local/bin/check_artisan && \
+    chown h-nishihara:h-nishihara /usr/local/bin/docker-entrypoint.sh && \
+    chmod +x /usr/local/bin/docker-entrypoint.sh && \
+    chown h-nishihara:h-nishihara /usr/local/bin/fix-laravel-permissions.sh && \
+    chmod +x /usr/local/bin/fix-laravel-permissions.sh && \
+
     # h-nishiharaユーザーをwww-dataグループに追加
     usermod -a -G www-data h-nishihara
     
