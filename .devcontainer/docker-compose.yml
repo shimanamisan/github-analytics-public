@@ -1,0 +1,94 @@
+volumes:
+  db-store:
+    name: GitHub-Traffic-API_db
+  php-fpm-socket:
+    name: GitHub-Traffic-API_php-fpm-socket
+
+services:
+  nginx-proxy:
+    container_name: nginx-proxy-GitHub-Traffic-API
+    build:
+      context: ./proxy
+      dockerfile: ./Dockerfile
+    image: nginx-proxy-github-traffic-api:1.0
+    ports:
+      - 80:80
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+
+  app:
+    container_name: GitHub-Traffic-API-backend
+    build:
+      context: ./php
+      dockerfile: ./Dockerfile
+    image: github-traffic-api-backend:1.0
+    volumes:
+      - php-fpm-socket:/var/run/php-fpm
+      - ../:/workspace:cached
+
+  web:
+    build:
+      context: ./nginx
+      dockerfile: ./Dockerfile
+    container_name: GitHub-Traffic-API-web
+    image: github-traffic-api-web:1.0
+    volumes:
+      - php-fpm-socket:/var/run/php-fpm
+      - ../:/workspace:cached
+    env_file: .env
+    environment:
+      - VIRTUAL_HOST=${VIRTUAL_HOST}
+    depends_on:
+      - app
+
+  db:
+    container_name: GitHub-Traffic-API-db
+    build:
+      context: ./mysql
+      dockerfile: ./Dockerfile
+    image: github-traffic-api-db:1.0
+    volumes:
+      - db-store:/var/lib/mysql
+    ports:
+      - 33306:3306
+    env_file: .env
+    environment:
+      TZ: ${TIME_ZONE}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+
+  # node:
+  #   container_name: GitHub-Traffic-API-node
+  #   build:
+  #     context: ./node
+  #     dockerfile: ./Dockerfile
+  #   image: github-traffic-api-node:1.0
+  #   working_dir: "/workspace/src"
+  #   command: /bin/bash -c 'npm i && npm rebuild node-sass && npm run dev'
+  #   ports:
+  #     - 5173:5173
+  #   volumes:
+  #     - ../:/workspace:cached
+  #   environment:
+  #     - TZ=Asia/Tokyo
+  #     - HOST=0.0.0.0
+
+  phpmyadmin:
+    container_name: GitHub-Traffic-API-phpmyadmin
+    build:
+      context: ./phpmyadmin
+      dockerfile: ./Dockerfile
+    image: github-traffic-api-phpmyadmin:1.0
+    ports:
+      - 8082:80
+    depends_on:
+      - db
+    env_file: .env
+    environment:
+      PMA_ARBITRARY: ${PMA_ARBITRARY}
+      PMA_HOSTS: ${PMA_HOSTS}
+      PMA_USER: ${PMA_USER}
+      PMA_PASSWORD: ${PMA_PASSWORD}
+      VIRTUAL_HOST: ${VIRTUAL_HOST_PHPMYADMIN}

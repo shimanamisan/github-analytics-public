@@ -1,0 +1,13 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "name": "PHP XDebug", // デバック構成として表示する名前
+        "type": "php", // 使用するデバッガー
+        // launch: デバッグ時にプログラムを起動する
+        // attach: 既に起動しているプログラムにデバッガーをアタッチする
+        "request": "launch", // デバッグ実行のモード
+        "port": 9003, // php.iniのxdebugの設定と合わせる
+      }
+    ]
+  }

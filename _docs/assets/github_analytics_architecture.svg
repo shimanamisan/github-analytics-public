@@ -1,0 +1,150 @@
+<svg viewBox="0 0 1000 700" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="1000" height="700" fill="#f8fafc"/>
+  
+  <!-- Title -->
+  <text x="500" y="30" text-anchor="middle" font-size="24" font-weight="bold" fill="#1f2937">
+    GitHub訪問数集計システム構成図 (Xserver + Laravel)
+  </text>
+  
+  <!-- GitHub Section -->
+  <g id="github-section">
+    <rect x="50" y="80" width="200" height="120" rx="10" fill="#24292e" stroke="#6b7280" stroke-width="2"/>
+    <text x="150" y="105" text-anchor="middle" font-size="16" font-weight="bold" fill="white">GitHub</text>
+    <text x="150" y="130" text-anchor="middle" font-size="12" fill="#e5e7eb">Repository</text>
+    <text x="150" y="150" text-anchor="middle" font-size="12" fill="#e5e7eb">Traffic API</text>
+    <text x="150" y="170" text-anchor="middle" font-size="10" fill="#9ca3af">訪問数データ提供</text>
+  </g>
+  
+  <!-- Xserver Section -->
+  <g id="xserver-section">
+    <rect x="350" y="60" width="300" height="280" rx="10" fill="#3b82f6" stroke="#1d4ed8" stroke-width="3"/>
+    <text x="500" y="85" text-anchor="middle" font-size="18" font-weight="bold" fill="white">Xserver</text>
+    
+    <!-- Laravel App -->
+    <rect x="370" y="100" width="260" height="200" rx="8" fill="white" stroke="#e5e7eb" stroke-width="2"/>
+    <text x="500" y="125" text-anchor="middle" font-size="16" font-weight="bold" fill="#dc2626">Laravel Application</text>
+    
+    <!-- Artisan Command -->
+    <rect x="380" y="140" width="110" height="60" rx="5" fill="#f3f4f6" stroke="#d1d5db"/>
+    <text x="435" y="160" text-anchor="middle" font-size="11" font-weight="bold" fill="#374151">Artisan Command</text>
+    <text x="435" y="175" text-anchor="middle" font-size="9" fill="#6b7280">github:fetch-views</text>
+    <text x="435" y="190" text-anchor="middle" font-size="9" fill="#6b7280">API呼び出し処理</text>
+    
+    <!-- Task Scheduler -->
+    <rect x="510" y="140" width="110" height="60" rx="5" fill="#f3f4f6" stroke="#d1d5db"/>
+    <text x="565" y="160" text-anchor="middle" font-size="11" font-weight="bold" fill="#374151">Task Scheduler</text>
+    <text x="565" y="175" text-anchor="middle" font-size="9" fill="#6b7280">dailyAt('02:00')</text>
+    <text x="565" y="190" text-anchor="middle" font-size="9" fill="#6b7280">スケジュール管理</text>
+    
+    <!-- Web Interface -->
+    <rect x="380" y="220" width="110" height="60" rx="5" fill="#f3f4f6" stroke="#d1d5db"/>
+    <text x="435" y="240" text-anchor="middle" font-size="11" font-weight="bold" fill="#374151">Web Interface</text>
+    <text x="435" y="255" text-anchor="middle" font-size="9" fill="#6b7280">データ表示</text>
+    <text x="435" y="270" text-anchor="middle" font-size="9" fill="#6b7280">グラフ・チャート</text>
+    
+    <!-- API Routes -->
+    <rect x="510" y="220" width="110" height="60" rx="5" fill="#f3f4f6" stroke="#d1d5db"/>
+    <text x="565" y="240" text-anchor="middle" font-size="11" font-weight="bold" fill="#374151">API Routes</text>
+    <text x="565" y="255" text-anchor="middle" font-size="9" fill="#6b7280">JSON API</text>
+    <text x="565" y="270" text-anchor="middle" font-size="9" fill="#6b7280">外部連携</text>
+    
+    <!-- Cron -->
+    <rect x="370" y="310" width="260" height="40" rx="5" fill="#059669" stroke="#047857"/>
+    <text x="500" y="325" text-anchor="middle" font-size="12" font-weight="bold" fill="white">Cron Job</text>
+    <text x="500" y="340" text-anchor="middle" font-size="10" fill="#d1fae5">0 2 * * * php artisan schedule:run</text>
+  </g>
+  
+  <!-- MySQL Database -->
+  <g id="database-section">
+    <rect x="750" y="80" width="200" height="120" rx="10" fill="#f59e0b" stroke="#d97706" stroke-width="2"/>
+    <text x="850" y="105" text-anchor="middle" font-size="16" font-weight="bold" fill="white">MySQL Database</text>
+    <text x="850" y="130" text-anchor="middle" font-size="12" fill="#fef3c7">github_views table</text>
+    <text x="850" y="150" text-anchor="middle" font-size="10" fill="#fef3c7">• project</text>
+    <text x="850" y="165" text-anchor="middle" font-size="10" fill="#fef3c7">• date, count, uniques</text>
+    <text x="850" y="180" text-anchor="middle" font-size="10" fill="#fef3c7">• timestamps</text>
+  </g>
+  
+  <!-- User/Browser -->
+  <g id="user-section">
+    <rect x="400" y="500" width="200" height="100" rx="10" fill="#8b5cf6" stroke="#7c3aed" stroke-width="2"/>
+    <text x="500" y="525" text-anchor="middle" font-size="16" font-weight="bold" fill="white">User/Browser</text>
+    <text x="500" y="545" text-anchor="middle" font-size="12" fill="#e9d5ff">Web Interface</text>
+    <text x="500" y="565" text-anchor="middle" font-size="12" fill="#e9d5ff">データ閲覧</text>
+    <text x="500" y="585" text-anchor="middle" font-size="12" fill="#e9d5ff">グラフ表示</text>
+  </g>
+  
+  <!-- Data Flow Arrows -->
+  
+  <!-- GitHub to Laravel -->
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" 
+     refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#374151" />
+    </marker>
+  </defs>
+  
+  <!-- GitHub API call -->
+  <path d="M 250 140 Q 300 120 350 160" stroke="#374151" stroke-width="3" fill="none" marker-end="url(#arrowhead)"/>
+  <text x="300" y="125" text-anchor="middle" font-size="10" fill="#374151" font-weight="bold">
+    API Request
+  </text>
+  <text x="300" y="138" text-anchor="middle" font-size="9" fill="#6b7280">
+    Personal Access Token
+  </text>
+  
+  <!-- Laravel to Database -->
+  <path d="M 650 180 Q 700 160 750 140" stroke="#374151" stroke-width="3" fill="none" marker-end="url(#arrowhead)"/>
+  <text x="700" y="155" text-anchor="middle" font-size="10" fill="#374151" font-weight="bold">
+    Store Data
+  </text>
+  
+  <!-- Database to Laravel -->
+  <path d="M 750 180 Q 700 200 650 220" stroke="#374151" stroke-width="3" fill="none" marker-end="url(#arrowhead)"/>
+  <text x="700" y="215" text-anchor="middle" font-size="10" fill="#374151" font-weight="bold">
+    Retrieve Data
+  </text>
+  
+  <!-- Laravel to User -->
+  <path d="M 500 360 Q 500 430 500 500" stroke="#374151" stroke-width="3" fill="none" marker-end="url(#arrowhead)"/>
+  <text x="520" y="430" text-anchor="middle" font-size="10" fill="#374151" font-weight="bold">
+    Web Response
+  </text>
+  
+  <!-- Process Flow Steps -->
+  <g id="process-steps">
+    <text x="50" y="650" font-size="14" font-weight="bold" fill="#1f2937">処理フロー:</text>
+    <text x="70" y="670" font-size="12" fill="#374151">1. Cronが毎日午前2時にLaravelスケジューラーを実行</text>
+    <text x="70" y="685" font-size="12" fill="#374151">2. ArtisanコマンドがGitHub APIから訪問数データを取得</text>
+    
+    <text x="520" y="670" font-size="12" fill="#374151">3. 取得したデータをMySQLに保存（重複チェック有り）</text>
+    <text x="520" y="685" font-size="12" fill="#374151">4. Webインターフェースでユーザーがデータを閲覧・分析</text>
+  </g>
+  
+  <!-- Technology Stack -->
+  <g id="tech-stack">
+    <rect x="50" y="400" width="300" height="160" rx="10" fill="#f9fafb" stroke="#e5e7eb" stroke-width="2"/>
+    <text x="200" y="425" text-anchor="middle" font-size="16" font-weight="bold" fill="#1f2937">使用技術</text>
+    
+    <text x="70" y="450" font-size="12" fill="#374151">• <tspan font-weight="bold">サーバー:</tspan> Xserver (共有ホスティング)</text>
+    <text x="70" y="470" font-size="12" fill="#374151">• <tspan font-weight="bold">フレームワーク:</tspan> Laravel (PHP)</text>
+    <text x="70" y="490" font-size="12" fill="#374151">• <tspan font-weight="bold">データベース:</tspan> MySQL</text>
+    <text x="70" y="510" font-size="12" fill="#374151">• <tspan font-weight="bold">スケジューラー:</tspan> Cron + Laravel Task Scheduler</text>
+    <text x="70" y="530" font-size="12" fill="#374151">• <tspan font-weight="bold">API:</tspan> GitHub Traffic API</text>
+    <text x="70" y="550" font-size="12" fill="#374151">• <tspan font-weight="bold">認証:</tspan> Personal Access Token</text>
+  </g>
+  
+  <!-- Benefits -->
+  <g id="benefits">
+    <rect x="650" y="400" width="300" height="160" rx="10" fill="#f0f9ff" stroke="#0ea5e9" stroke-width="2"/>
+    <text x="800" y="425" text-anchor="middle" font-size="16" font-weight="bold" fill="#1f2937">システムの特徴</text>
+    
+    <text x="670" y="450" font-size="12" fill="#374151">• <tspan font-weight="bold">自動化:</tspan> 毎日自動でデータ収集</text>
+    <text x="670" y="470" font-size="12" fill="#374151">• <tspan font-weight="bold">重複回避:</tspan> 同じ日付のデータは更新</text>
+    <text x="670" y="490" font-size="12" fill="#374151">• <tspan font-weight="bold">長期保存:</tspan> GitHub APIの2週間制限を回避</text>
+    <text x="670" y="510" font-size="12" fill="#374151">• <tspan font-weight="bold">可視化:</tspan> Web UIでデータ閲覧・分析</text>
+    <text x="670" y="530" font-size="12" fill="#374151">• <tspan font-weight="bold">拡張性:</tspan> 複数リポジトリ対応可能</text>
+    <text x="670" y="550" font-size="12" fill="#374151">• <tspan font-weight="bold">コスト効率:</tspan> 共有ホスティングで運用</text>
+  </g>
+  
+</svg>
