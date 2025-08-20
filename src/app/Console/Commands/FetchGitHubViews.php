@@ -106,7 +106,7 @@ class FetchGitHubViews extends Command
             ->orderBy('date', 'desc')
             ->first();
 
-        $lastDate = $lastRecord ? $lastRecord->date : now()->subDays(14);
+        $lastDate = $lastRecord ? Carbon::parse($lastRecord->date) : now()->subDays(14);
 
         $response = Http::withHeaders([
             'Authorization' => "token {$token}",
@@ -119,30 +119,42 @@ class FetchGitHubViews extends Command
 
         $data = $response->json();
         
-        if (!isset($data['views'])) {
-            return ['inserted' => 0, 'updated' => 0];
-        }
-
         $insertedCount = 0;
         $updatedCount = 0;
 
-        foreach ($data['views'] as $view) {
-            $viewDate = Carbon::parse($view['timestamp'])->format('Y-m-d');
-            
-            // 重複チェック & 今日以外のデータのみ（テスト時は除く）
-            if (!$this->option('test') && ($viewDate <= $lastDate->format('Y-m-d') || $viewDate === now()->format('Y-m-d'))) {
-                continue;
+        // GitHub APIから取得したデータを日付でインデックス化
+        $apiViews = [];
+        if (isset($data['views'])) {
+            foreach ($data['views'] as $view) {
+                $viewDate = Carbon::parse($view['timestamp'])->format('Y-m-d');
+                $apiViews[$viewDate] = [
+                    'count' => $view['count'],
+                    'uniques' => $view['uniques']
+                ];
             }
+        }
+
+        // 処理対象期間を決定（最後の記録日の翌日から昨日まで、テスト時は今日まで）
+        $startDate = $lastDate->copy()->addDay();
+        $endDate = $this->option('test') ? now() : now()->subDay();
+
+        // 日付範囲をループして、アクセス数0の日も含めて登録
+        $currentDate = $startDate->copy();
+        while ($currentDate <= $endDate) {
+            $dateString = $currentDate->format('Y-m-d');
+            
+            // GitHub APIにデータがある場合はその値を、ない場合は0を使用
+            $viewData = $apiViews[$dateString] ?? ['count' => 0, 'uniques' => 0];
 
             $result = GitHubView::updateOrCreate(
                 [
                     'repository_id' => $repository->id,
                     'project' => $repository->full_name,
-                    'date' => $viewDate
+                    'date' => $dateString
                 ],
                 [
-                    'count' => $view['count'],
-                    'uniques' => $view['uniques']
+                    'count' => $viewData['count'],
+                    'uniques' => $viewData['uniques']
                 ]
             );
 
@@ -151,6 +163,8 @@ class FetchGitHubViews extends Command
             } else {
                 $updatedCount++;
             }
+
+            $currentDate->addDay();
         }
 
         return ['inserted' => $insertedCount, 'updated' => $updatedCount];

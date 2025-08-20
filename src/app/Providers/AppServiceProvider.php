@@ -19,6 +19,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        // ヘルパー関数の登録
+        require_once app_path('Helpers/UrlHelper.php');
     }
 }
