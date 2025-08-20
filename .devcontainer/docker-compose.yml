@@ -1,12 +1,12 @@
 volumes:
   db-store:
-    name: GitHub-Traffic-API_db
+    name: github-traffic-api_db
   php-fpm-socket:
-    name: GitHub-Traffic-API_php-fpm-socket
+    name: github-traffic-api_php-fpm-socket
 
 services:
   nginx-proxy:
-    container_name: Nginx-Proxy-GitHub-Traffic-API
+    container_name: github-traffic-api-nginx-proxy
     build:
       context: ./proxy
       dockerfile: ./Dockerfile
@@ -17,7 +17,7 @@ services:
       - /var/run/docker.sock:/tmp/docker.sock:ro
 
   app:
-    container_name: GitHub-Traffic-API-backend
+    container_name: github-traffic-api-backend
     build:
       context: ./php
       dockerfile: ./Dockerfile
@@ -30,7 +30,7 @@ services:
     build:
       context: ./nginx
       dockerfile: ./Dockerfile
-    container_name: GitHub-Traffic-API-web
+    container_name: github-traffic-api-web
     image: github-traffic-api-web:1.0
     volumes:
       - php-fpm-socket:/var/run/php-fpm
@@ -42,7 +42,7 @@ services:
       - app
 
   db:
-    container_name: GitHub-Traffic-API-db
+    container_name: github-traffic-api-db
     build:
       context: ./mysql
       dockerfile: ./Dockerfile
@@ -50,7 +50,7 @@ services:
     volumes:
       - db-store:/var/lib/mysql
     ports:
-      - 33306:3306
+      - 3333:3306
     env_file: .env
     environment:
       TZ: ${TIME_ZONE}
@@ -76,13 +76,13 @@ services:
   #     - HOST=0.0.0.0
 
   phpmyadmin:
-    container_name: GitHub-Traffic-API-phpmyadmin
+    container_name: github-traffic-api-phpmyadmin
     build:
       context: ./phpmyadmin
       dockerfile: ./Dockerfile
     image: github-traffic-api-phpmyadmin:1.0
     ports:
-      - 8082:80
+      - 8091:80
     depends_on:
       - db
     env_file: .env
