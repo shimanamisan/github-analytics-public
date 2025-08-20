@@ -61,5 +61,6 @@ RUN useradd -m -s /bin/bash h-nishihara && \
     # h-nishiharaユーザーをwww-dataグループに追加
     usermod -a -G www-data h-nishihara
     
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 # supervisordを起動
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]

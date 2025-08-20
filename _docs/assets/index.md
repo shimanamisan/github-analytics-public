@@ -174,3 +174,5 @@ class GitHubViewController extends Controller
 - **デバッグ** - ログファイルの確認が簡単
 
 このように、Xserver + Laravel環境でも元記事と同様の機能を十分に実装できます。むしろ、継続的な運用やデータの可視化を考えると、より実用的な選択肢かもしれません。
+
+

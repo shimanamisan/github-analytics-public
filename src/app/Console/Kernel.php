@@ -12,20 +12,6 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule): void
     {
-        // GitHub訪問数データを毎日午前2時に取得
-        $schedule->command('github:fetch-views')
-                 ->dailyAt('02:00')
-                 ->appendOutputTo(storage_path('logs/github-fetch.log'))
-                 ->onFailure(function () {
-                     \Log::error('GitHub訪問数取得スケジュールが失敗しました');
-                 });
-
-        // テスト用：毎分実行（開発環境のみ）
-        if (app()->environment('local', 'development')) {
-            $schedule->command('github:fetch-views')
-                     ->everyMinute()
-                     ->appendOutputTo(storage_path('logs/github-fetch-test.log'));
-        }
     }
 
     /**

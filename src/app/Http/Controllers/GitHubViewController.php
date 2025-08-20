@@ -14,9 +14,14 @@ class GitHubViewController extends Controller
      */
     public function index(Request $request): View
     {
-        $query = GitHubView::query();
+        $query = GitHubView::with('repository');
         
-        // プロジェクトでフィルタリング
+        // リポジトリでフィルタリング
+        if ($request->has('repository_id') && $request->repository_id) {
+            $query->forRepository($request->repository_id);
+        }
+        
+        // プロジェクトでフィルタリング（後方互換性のため）
         if ($request->has('project') && $request->project) {
             $query->forProject($request->project);
         }
@@ -33,10 +38,13 @@ class GitHubViewController extends Controller
         $views = $query->orderBy('date', 'desc')
                       ->paginate(30);
         
-        // プロジェクト一覧を取得（フィルター用）
+        // リポジトリ一覧を取得（フィルター用）
+        $repositories = \App\Models\GitHubRepository::orderBy('name')->get();
+        
+        // プロジェクト一覧を取得（後方互換性のため）
         $projects = GitHubView::distinct()->pluck('project');
         
-        return view('github.views', compact('views', 'projects'));
+        return view('github.views', compact('views', 'repositories', 'projects'));
     }
 
     /**
@@ -44,9 +52,14 @@ class GitHubViewController extends Controller
      */
     public function chart(Request $request): JsonResponse
     {
-        $query = GitHubView::query();
+        $query = GitHubView::with('repository');
         
-        // プロジェクトでフィルタリング
+        // リポジトリでフィルタリング
+        if ($request->has('repository_id') && $request->repository_id) {
+            $query->forRepository($request->repository_id);
+        }
+        
+        // プロジェクトでフィルタリング（後方互換性のため）
         if ($request->has('project') && $request->project) {
             $query->forProject($request->project);
         }
@@ -57,7 +70,7 @@ class GitHubViewController extends Controller
         
         $data = $query->dateRange($startDate, $endDate)
                      ->orderBy('date', 'asc')
-                     ->get(['date', 'count', 'uniques']);
+                     ->get(['date', 'count', 'uniques', 'repository_id']);
         
         return response()->json($data);
     }
