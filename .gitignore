@@ -30,4 +30,5 @@ Homestead.json
 auth.json
 
 # other
-.pid
+supervisord.pid
+.DS_Store
