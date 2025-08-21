@@ -55,8 +55,36 @@ class GitHubViewController extends Controller
             $query->where('date', '<=', $request->end_date);
         }
         
-        $views = $query->orderBy('date', 'desc')
-                       ->paginate(30);
+        // プロジェクトパラメータが空の場合（「すべて」が選択されている場合）は、
+        // リポジトリごとに集計したデータを表示
+        if (!$request->filled('project') && !$request->filled('repository_id')) {
+            $views = $query->selectRaw('
+                project,
+                repository_id,
+                COUNT(*) as record_count,
+                SUM(count) as count,
+                SUM(uniques) as uniques,
+                MIN(date) as first_date,
+                MAX(date) as last_date
+            ')
+            ->groupBy('project', 'repository_id')
+            ->orderBy('count', 'desc')
+            ->paginate(30);
+            
+            // リポジトリ情報をロード
+            $views->getCollection()->load('repository');
+            
+            // 日付フィールドをCarbonオブジェクトに変換
+            $views->getCollection()->transform(function($item) {
+                $item->first_date = \Carbon\Carbon::parse($item->first_date);
+                $item->last_date = \Carbon\Carbon::parse($item->last_date);
+                return $item;
+            });
+        } else {
+            // 特定のプロジェクトまたはリポジトリが選択されている場合は、個別のデータを取得
+            $views = $query->orderBy('date', 'desc')
+                           ->paginate(30);
+        }
         
         // リポジトリ一覧を取得（フィルター用）
         $repositories = \App\Models\GitHubRepository::orderBy('name')->get();
@@ -88,16 +116,52 @@ class GitHubViewController extends Controller
         $startDate = $request->filled('start_date') ? $request->start_date : now()->subDays(30)->format('Y-m-d');
         $endDate = $request->filled('end_date') ? $request->end_date : now()->format('Y-m-d');
         
-        $chartData = $chartQuery->dateRange($startDate, $endDate)
-                                 ->orderBy('date', 'asc')
-                                 ->get(['date', 'count', 'uniques'])
-                                 ->map(function($item) {
-                                    return [
-                                        'date' => $item->date->format('Y-m-d'),
-                                        'count' => $item->count,
-                                        'uniques' => $item->uniques
-                                    ];
-                                });
+        // 日付フィルターをチャートクエリに直接適用
+        $chartQuery->whereBetween('date', [$startDate, $endDate]);
+        
+        // デバッグ用ログ
+        \Log::info('Chart date filter applied', [
+            'start_date' => $startDate,
+            'end_date' => $endDate,
+            'request_start_date' => $request->get('start_date'),
+            'request_end_date' => $request->get('end_date'),
+            'start_date_filled' => $request->filled('start_date'),
+            'end_date_filled' => $request->filled('end_date')
+        ]);
+        
+        // プロジェクトパラメータが空の場合（「すべて」が選択されている場合）は、
+        // すべてのリポジトリのデータを日付ごとに集計
+        if (!$request->filled('project') && !$request->filled('repository_id')) {
+            $chartData = $chartQuery->selectRaw('date, SUM(count) as count, SUM(uniques) as uniques')
+                                     ->groupBy('date')
+                                     ->orderBy('date', 'asc')
+                                     ->get()
+                                     ->map(function($item) {
+                                        return [
+                                            'date' => $item->date->format('Y-m-d'),
+                                            'count' => (int)$item->count,
+                                            'uniques' => (int)$item->uniques
+                                        ];
+                                    });
+        } else {
+            // 特定のプロジェクトまたはリポジトリが選択されている場合は、個別のデータを取得
+            $chartData = $chartQuery->orderBy('date', 'asc')
+                                     ->get(['date', 'count', 'uniques'])
+                                     ->map(function($item) {
+                                        return [
+                                            'date' => $item->date->format('Y-m-d'),
+                                            'count' => $item->count,
+                                            'uniques' => $item->uniques
+                                        ];
+                                    });
+        }
+        
+        // チャートデータのデバッグログ
+        \Log::info('Chart data result', [
+            'data_count' => $chartData->count(),
+            'first_date' => $chartData->first()['date'] ?? 'no data',
+            'last_date' => $chartData->last()['date'] ?? 'no data'
+        ]);
         
         // サーバーサイドで統計情報を準備
         $statsQuery = GitHubView::query();
@@ -127,6 +191,8 @@ class GitHubViewController extends Controller
             $statsQuery->where('date', '<=', $request->end_date);
         }
         
+        // プロジェクトパラメータが空の場合（「すべて」が選択されている場合）は、
+        // すべてのリポジトリのデータを集計（フィルターは既に適用済み）
         $stats = $statsQuery->selectRaw('
             COUNT(*) as total_records,
             SUM(count) as total_views,
@@ -185,9 +251,28 @@ class GitHubViewController extends Controller
         $startDate = $request->filled('start_date') ? $request->start_date : now()->subDays(30)->format('Y-m-d');
         $endDate = $request->filled('end_date') ? $request->end_date : now()->format('Y-m-d');
         
-        $data = $query->dateRange($startDate, $endDate)
-                     ->orderBy('date', 'asc')
-                     ->get(['date', 'count', 'uniques', 'repository_id']);
+        // 日付フィルターをクエリに直接適用
+        $query->whereBetween('date', [$startDate, $endDate]);
+        
+        // プロジェクトパラメータが空の場合（「すべて」が選択されている場合）は、
+        // すべてのリポジトリのデータを日付ごとに集計
+        if (!$request->filled('project') && !$request->filled('repository_id')) {
+            $data = $query->selectRaw('date, SUM(count) as count, SUM(uniques) as uniques')
+                         ->groupBy('date')
+                         ->orderBy('date', 'asc')
+                         ->get()
+                         ->map(function($item) {
+                            return [
+                                'date' => $item->date->format('Y-m-d'),
+                                'count' => (int)$item->count,
+                                'uniques' => (int)$item->uniques
+                            ];
+                        });
+        } else {
+            // 特定のプロジェクトまたはリポジトリが選択されている場合は、個別のデータを取得
+            $data = $query->orderBy('date', 'asc')
+                         ->get(['date', 'count', 'uniques', 'repository_id']);
+        }
         
         // デバッグ用ログ
         \Log::info('Chart query result', [

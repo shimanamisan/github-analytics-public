@@ -204,7 +204,13 @@
         
         <!-- チャート -->
         <div class="chart-container">
-            <h3>訪問数推移</h3>
+            <h3>訪問数推移
+                @if(request('start_date') || request('end_date'))
+                    <small style="font-size: 0.8em; color: #666;">
+                        ({{ request('start_date') ?: '開始日なし' }} ～ {{ request('end_date') ?: '終了日なし' }})
+                    </small>
+                @endif
+            </h3>
             @if($chartData && count($chartData) > 0)
                 <canvas id="viewsChart" width="400" height="200"></canvas>
             @else
@@ -223,7 +229,12 @@
                 <thead>
                     <tr>
                         <th>プロジェクト</th>
-                        <th>日付</th>
+                        @if(!request('project') && !request('repository_id'))
+                            <th>期間</th>
+                            <th>記録数</th>
+                        @else
+                            <th>日付</th>
+                        @endif
                         <th>訪問数</th>
                         <th>ユニーク訪問者</th>
                     </tr>
@@ -231,8 +242,19 @@
                 <tbody>
                     @foreach($views as $view)
                     <tr>
-                        <td>{{ $view->project }}</td>
-                        <td>{{ $view->date->format('Y-m-d') }}</td>
+                        <td>
+                            @if(!request('project') && !request('repository_id') && $view->repository)
+                                {{ $view->repository->display_name ?? $view->project }}
+                            @else
+                                {{ $view->project }}
+                            @endif
+                        </td>
+                        @if(!request('project') && !request('repository_id'))
+                            <td>{{ $view->first_date->format('Y-m-d') }} ～ {{ $view->last_date->format('Y-m-d') }}</td>
+                            <td>{{ number_format($view->record_count) }}</td>
+                        @else
+                            <td>{{ $view->date->format('Y-m-d') }}</td>
+                        @endif
                         <td>{{ number_format($view->count) }}</td>
                         <td>{{ number_format($view->uniques) }}</td>
                     </tr>
