@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GitHub訪問数集計システム</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/date-fns@2.29.3/index.min.js"></script>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -127,6 +126,18 @@
             color: white;
             border-color: #007bff;
         }
+        .no-data-message {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        .no-data-message h4 {
+            margin-bottom: 10px;
+            color: #333;
+        }
+        .no-data-message p {
+            margin-bottom: 5px;
+        }
     </style>
 </head>
 <body>
@@ -135,7 +146,7 @@
         
         <!-- フィルター -->
         <div class="filters">
-                            <form method="GET" action="{{ route('github.views') }}" id="filterForm">
+            <form method="GET" action="{{ route('github.views') }}" id="filterForm">
                 <div class="filter-group">
                     <label for="project">プロジェクト:</label>
                     <select name="project" id="project">
@@ -166,19 +177,27 @@
         <!-- 統計情報 -->
         <div class="stats-grid" id="statsGrid">
             <div class="stat-card">
-                <div class="stat-number" id="totalViews">-</div>
+                <div class="stat-number" id="totalViews">
+                    {{ $stats && $stats->total_views ? number_format($stats->total_views) : '-' }}
+                </div>
                 <div class="stat-label">総訪問数</div>
             </div>
             <div class="stat-card">
-                <div class="stat-number" id="totalUniques">-</div>
+                <div class="stat-number" id="totalUniques">
+                    {{ $stats && $stats->total_uniques ? number_format($stats->total_uniques) : '-' }}
+                </div>
                 <div class="stat-label">総ユニーク訪問者</div>
             </div>
             <div class="stat-card">
-                <div class="stat-number" id="avgViews">-</div>
+                <div class="stat-number" id="avgViews">
+                    {{ $stats && $stats->avg_views ? round($stats->avg_views) : '-' }}
+                </div>
                 <div class="stat-label">平均訪問数</div>
             </div>
             <div class="stat-card">
-                <div class="stat-number" id="avgUniques">-</div>
+                <div class="stat-number" id="avgUniques">
+                    {{ $stats && $stats->avg_uniques ? round($stats->avg_uniques) : '-' }}
+                </div>
                 <div class="stat-label">平均ユニーク訪問者</div>
             </div>
         </div>
@@ -186,119 +205,103 @@
         <!-- チャート -->
         <div class="chart-container">
             <h3>訪問数推移</h3>
-            <canvas id="viewsChart" width="400" height="200"></canvas>
+            @if($chartData && count($chartData) > 0)
+                <canvas id="viewsChart" width="400" height="200"></canvas>
+            @else
+                <div class="no-data-message">
+                    <h4>データが見つかりません</h4>
+                    <p>選択された条件に一致するデータがありません。</p>
+                    <p>フィルター条件を変更するか、日付範囲を調整してください。</p>
+                </div>
+            @endif
         </div>
         
         <!-- データテーブル -->
         <h3>訪問数データ</h3>
-        <table class="data-table">
-            <thead>
-                <tr>
-                    <th>プロジェクト</th>
-                    <th>日付</th>
-                    <th>訪問数</th>
-                    <th>ユニーク訪問者</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach($views as $view)
-                <tr>
-                    <td>{{ $view->project }}</td>
-                    <td>{{ $view->date->format('Y-m-d') }}</td>
-                    <td>{{ number_format($view->count) }}</td>
-                    <td>{{ number_format($view->uniques) }}</td>
-                </tr>
-                @endforeach
-            </tbody>
-        </table>
-        
-        <!-- ページネーション -->
-        <div class="pagination">
-            {{ $views->links() }}
-        </div>
+        @if($views->count() > 0)
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>プロジェクト</th>
+                        <th>日付</th>
+                        <th>訪問数</th>
+                        <th>ユニーク訪問者</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($views as $view)
+                    <tr>
+                        <td>{{ $view->project }}</td>
+                        <td>{{ $view->date->format('Y-m-d') }}</td>
+                        <td>{{ number_format($view->count) }}</td>
+                        <td>{{ number_format($view->uniques) }}</td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+            
+            <!-- ページネーション -->
+            <div class="pagination">
+                {{ $views->links() }}
+            </div>
+        @else
+            <div class="no-data-message">
+                <h4>データが見つかりません</h4>
+                <p>選択された条件に一致するデータがありません。</p>
+                <p>フィルター条件を変更するか、日付範囲を調整してください。</p>
+            </div>
+        @endif
     </div>
 
+    @if($chartData && count($chartData) > 0)
     <script>
-        let viewsChart;
-        
-        // ページ読み込み時にデータを取得
+        // チャートデータが存在する場合のみChart.jsを初期化
         document.addEventListener('DOMContentLoaded', function() {
-            loadStats();
-            loadChart();
-        });
-        
-        // 統計情報を読み込み
-        function loadStats() {
-            const params = new URLSearchParams(window.location.search);
-                            fetch(`{{ route('github.stats') }}?${params}`)
-                .then(response => response.json())
-                .then(data => {
-                    document.getElementById('totalViews').textContent = data.total_views ? numberFormat(data.total_views) : '-';
-                    document.getElementById('totalUniques').textContent = data.total_uniques ? numberFormat(data.total_uniques) : '-';
-                    document.getElementById('avgViews').textContent = data.avg_views ? Math.round(data.avg_views) : '-';
-                    document.getElementById('avgUniques').textContent = data.avg_uniques ? Math.round(data.avg_uniques) : '-';
-                })
-                .catch(error => console.error('統計情報の取得に失敗しました:', error));
-        }
-        
-        // チャートデータを読み込み
-        function loadChart() {
-            const params = new URLSearchParams(window.location.search);
-                            fetch(`{{ route('github.chart') }}?${params}`)
-                .then(response => response.json())
-                .then(data => {
-                    createChart(data);
-                })
-                .catch(error => console.error('チャートデータの取得に失敗しました:', error));
-        }
-        
-        // チャートを作成
-        function createChart(data) {
-            const ctx = document.getElementById('viewsChart').getContext('2d');
-            
-            if (viewsChart) {
-                viewsChart.destroy();
+            const ctx = document.getElementById('viewsChart');
+            if (ctx) {
+                const chartData = JSON.parse('@json($chartData)');
+                
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: chartData.map(function(item) { return item.date; }),
+                        datasets: [
+                            {
+                                label: '訪問数',
+                                data: chartData.map(function(item) { return item.count; }),
+                                borderColor: '#007bff',
+                                backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                                tension: 0.1
+                            },
+                            {
+                                label: 'ユニーク訪問者',
+                                data: chartData.map(function(item) { return item.uniques; }),
+                                borderColor: '#28a745',
+                                backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                                tension: 0.1
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                position: 'top'
+                            }
+                        }
+                    }
+                });
             }
-            
-            const chartData = {
-                labels: data.map(item => item.date),
-                datasets: [
-                    {
-                        label: '訪問数',
-                        data: data.map(item => item.count),
-                        borderColor: '#007bff',
-                        backgroundColor: 'rgba(0, 123, 255, 0.1)',
-                        tension: 0.1
-                    },
-                    {
-                        label: 'ユニーク訪問者',
-                        data: data.map(item => item.uniques),
-                        borderColor: '#28a745',
-                        backgroundColor: 'rgba(40, 167, 69, 0.1)',
-                        tension: 0.1
-                    }
-                ]
-            };
-            
-            viewsChart = new Chart(ctx, {
-                type: 'line',
-                data: chartData,
-                options: {
-                    responsive: true,
-                    scales: {
-                        y: {
-                            beginAtZero: true
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                            position: 'top'
-                        }
-                    }
-                }
-            });
-        }
-        
+        });
+    </script>
+    @endif
+    
+    <script>
         // フィルターリセット
         function resetFilters() {
             document.getElementById('project').value = '';
@@ -306,19 +309,6 @@
             document.getElementById('end_date').value = '';
             document.getElementById('filterForm').submit();
         }
-        
-        // 数値フォーマット
-        function numberFormat(num) {
-            return new Intl.NumberFormat('ja-JP').format(num);
-        }
-        
-        // フィルター変更時にチャートを更新
-        document.getElementById('filterForm').addEventListener('submit', function() {
-            setTimeout(() => {
-                loadStats();
-                loadChart();
-            }, 100);
-        });
     </script>
 </body>
 </html>
