@@ -23,4 +23,5 @@ Route::post('/logout', [App\Http\Controllers\Auth\LoginController::class, 'logou
 Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
     Route::get('/', [App\Http\Controllers\AdminController::class, 'dashboard'])->name('dashboard');
     Route::get('/repositories', [App\Http\Controllers\AdminController::class, 'repositories'])->name('repositories');
+    Route::get('/repositories/create', [App\Http\Controllers\AdminController::class, 'createRepository'])->name('repositories.create');
 });

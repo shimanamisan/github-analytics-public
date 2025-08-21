@@ -64,19 +64,29 @@ class RepositoryManager extends Component
         return view('livewire.repository-manager', compact('repositories'));
     }
 
-    public function openModal()
+    public function openEditModal($repositoryId)
     {
+        $repository = GitHubRepository::findOrFail($repositoryId);
+        
+        $this->editMode = true;
+        $this->repositoryId = $repository->id;
+        $this->owner = $repository->owner;
+        $this->repo = $repository->repo;
+        $this->name = $repository->name;
+        $this->description = $repository->description;
+        $this->is_active = $repository->is_active;
+        $this->github_token = $repository->github_token;
+        
         $this->showModal = true;
-        $this->resetForm();
     }
 
-    public function closeModal()
+    public function closeEditModal()
     {
         $this->showModal = false;
-        $this->resetForm();
+        $this->resetEditForm();
     }
 
-    public function resetForm()
+    public function resetEditForm()
     {
         $this->editMode = false;
         $this->repositoryId = null;
@@ -94,57 +104,25 @@ class RepositoryManager extends Component
         $this->validate();
 
         try {
-            if ($this->editMode) {
-                $repository = GitHubRepository::findOrFail($this->repositoryId);
-                $repository->update([
-                    'owner' => $this->owner,
-                    'repo' => $this->repo,
-                    'name' => $this->name,
-                    'description' => $this->description,
-                    'is_active' => $this->is_active,
-                    'github_token' => $this->github_token ?: null,
-                ]);
-                session()->flash('message', 'リポジトリが正常に更新されました。');
-                
-                // ログに記録
-                \Log::info('リポジトリが更新されました', [
-                    'user' => auth()->user()->email,
-                    'repository' => "{$this->owner}/{$this->repo}",
-                    'action' => 'update'
-                ]);
-            } else {
-                $repository = GitHubRepository::create([
-                    'owner' => $this->owner,
-                    'repo' => $this->repo,
-                    'name' => $this->name,
-                    'description' => $this->description,
-                    'is_active' => $this->is_active,
-                    'github_token' => $this->github_token ?: null,
-                ]);
-                session()->flash('message', 'リポジトリが正常に追加されました。');
-                
-                // ログに記録
-                \Log::info('新しいリポジトリが追加されました', [
-                    'user' => auth()->user()->email,
-                    'repository' => "{$this->owner}/{$this->repo}",
-                    'action' => 'create'
-                ]);
-                
-                // 追加後に即座にデータ取得を実行（オプション）
-                if ($this->is_active) {
-                    try {
-                        \Artisan::call('github:fetch-views', ['--repository' => $repository->id, '--test' => true]);
-                        session()->flash('message', 'リポジトリが正常に追加され、初回データ取得も完了しました。');
-                    } catch (\Exception $e) {
-                        \Log::warning('初回データ取得に失敗しました', [
-                            'repository' => $repository->id,
-                            'error' => $e->getMessage()
-                        ]);
-                    }
-                }
-            }
+            $repository = GitHubRepository::findOrFail($this->repositoryId);
+            $repository->update([
+                'owner' => $this->owner,
+                'repo' => $this->repo,
+                'name' => $this->name,
+                'description' => $this->description,
+                'is_active' => $this->is_active,
+                'github_token' => $this->github_token ?: null,
+            ]);
+            session()->flash('message', 'リポジトリが正常に更新されました。');
+            
+            // ログに記録
+            \Log::info('リポジトリが更新されました', [
+                'user' => auth()->user()->email,
+                'repository' => "{$this->owner}/{$this->repo}",
+                'action' => 'update'
+            ]);
 
-            $this->closeModal();
+            $this->closeEditModal();
         } catch (\Exception $e) {
             if (str_contains($e->getMessage(), 'Duplicate entry')) {
                 session()->flash('error', 'このオーナー/リポジトリの組み合わせは既に登録されています。');
@@ -152,22 +130,6 @@ class RepositoryManager extends Component
                 session()->flash('error', 'エラーが発生しました: ' . $e->getMessage());
             }
         }
-    }
-
-    public function edit($repositoryId)
-    {
-        $repository = GitHubRepository::findOrFail($repositoryId);
-        
-        $this->editMode = true;
-        $this->repositoryId = $repository->id;
-        $this->owner = $repository->owner;
-        $this->repo = $repository->repo;
-        $this->name = $repository->name;
-        $this->description = $repository->description;
-        $this->is_active = $repository->is_active;
-        $this->github_token = $repository->github_token;
-        
-        $this->showModal = true;
     }
 
     public function delete($repositoryId)

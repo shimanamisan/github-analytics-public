@@ -36,7 +36,7 @@ class GitHubViewController extends Controller
         }
         
         $views = $query->orderBy('date', 'desc')
-                      ->paginate(30);
+                       ->paginate(30);
         
         // リポジトリ一覧を取得（フィルター用）
         $repositories = \App\Models\GitHubRepository::orderBy('name')->get();

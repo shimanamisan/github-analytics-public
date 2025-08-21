@@ -35,15 +35,15 @@
                 <option value="inactive">非アクティブ</option>
             </select>
             
-            <button 
-                wire:click="openModal" 
-                class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+            <a 
+                href="{{ route('admin.repositories.create') }}"
+                class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors inline-flex items-center"
             >
                 <svg class="w-5 h-5 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                 </svg>
                 新規追加
-            </button>
+            </a>
         </div>
     </div>
 
@@ -101,7 +101,7 @@
                                 </button>
                                 
                                 <button 
-                                    wire:click="edit({{ $repository->id }})"
+                                    wire:click="openEditModal({{ $repository->id }})"
                                     class="text-indigo-600 hover:text-indigo-900"
                                     title="編集"
                                 >
@@ -139,13 +139,13 @@
         {{ $repositories->links() }}
     </div>
 
-    <!-- モーダル -->
+    <!-- 編集用モーダル -->
     @if($showModal)
         <div class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
             <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-1/2 shadow-lg rounded-md bg-white">
                 <div class="mt-3">
                     <h3 class="text-lg font-medium text-gray-900 mb-4">
-                        {{ $editMode ? 'リポジトリを編集' : '新しいリポジトリを追加' }}
+                        リポジトリを編集
                     </h3>
                     
                     <form wire:submit="save" class="space-y-4">
@@ -218,7 +218,7 @@
                         <div class="flex justify-end space-x-3 pt-4">
                             <button 
                                 type="button" 
-                                wire:click="closeModal"
+                                wire:click="closeEditModal"
                                 class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors"
                             >
                                 キャンセル
@@ -227,7 +227,7 @@
                                 type="submit"
                                 class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
                             >
-                                {{ $editMode ? '更新' : '追加' }}
+                                更新
                             </button>
                         </div>
                     </form>

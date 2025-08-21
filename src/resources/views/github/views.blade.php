@@ -135,7 +135,7 @@
         
         <!-- フィルター -->
         <div class="filters">
-                            <form method="GET" action="{{ \App\Helpers\UrlHelper::githubUrl('views') }}" id="filterForm">
+                            <form method="GET" action="{{ route('github.views') }}" id="filterForm">
                 <div class="filter-group">
                     <label for="project">プロジェクト:</label>
                     <select name="project" id="project">
@@ -230,7 +230,7 @@
         // 統計情報を読み込み
         function loadStats() {
             const params = new URLSearchParams(window.location.search);
-                            fetch(`{{ \App\Helpers\UrlHelper::githubUrl('stats') }}?${params}`)
+                            fetch(`{{ route('github.stats') }}?${params}`)
                 .then(response => response.json())
                 .then(data => {
                     document.getElementById('totalViews').textContent = data.total_views ? numberFormat(data.total_views) : '-';
@@ -244,7 +244,7 @@
         // チャートデータを読み込み
         function loadChart() {
             const params = new URLSearchParams(window.location.search);
-                            fetch(`{{ \App\Helpers\UrlHelper::githubUrl('chart') }}?${params}`)
+                            fetch(`{{ route('github.chart') }}?${params}`)
                 .then(response => response.json())
                 .then(data => {
                     createChart(data);

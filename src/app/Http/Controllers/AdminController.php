@@ -3,23 +3,38 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\View\View;
+use App\Models\GitHubRepository;
+use App\Models\GitHubView;
 
 class AdminController extends Controller
 {
-    /**
-     * 管理画面のダッシュボードを表示
-     */
-    public function dashboard(): View
+    public function dashboard()
     {
-        return view('admin.dashboard');
+        $totalRepositories = GitHubRepository::count();
+        $activeRepositories = GitHubRepository::where('is_active', true)->count();
+        $totalViews = GitHubView::sum('count');
+        $totalUniques = GitHubView::sum('uniques');
+        
+        $recentRepositories = GitHubRepository::latest()->take(5)->get();
+        $recentViews = GitHubView::with('repository')->latest()->take(10)->get();
+        
+        return view('admin.dashboard', compact(
+            'totalRepositories', 
+            'activeRepositories', 
+            'totalViews', 
+            'totalUniques',
+            'recentRepositories',
+            'recentViews'
+        ));
     }
 
-    /**
-     * リポジトリ管理画面を表示
-     */
-    public function repositories(): View
+    public function repositories()
     {
         return view('admin.repositories');
+    }
+
+    public function createRepository()
+    {
+        return view('admin.create-repository');
     }
 }

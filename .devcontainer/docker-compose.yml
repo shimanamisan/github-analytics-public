@@ -12,7 +12,7 @@ services:
       dockerfile: ./Dockerfile
     image: nginx-proxy-github-traffic-api:1.0
     ports:
-      - 8090:80
+      - 80:80
     volumes:
       - /var/run/docker.sock:/tmp/docker.sock:ro
 
@@ -59,21 +59,21 @@ services:
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
 
-  # node:
-  #   container_name: GitHub-Traffic-API-node
-  #   build:
-  #     context: ./node
-  #     dockerfile: ./Dockerfile
-  #   image: github-traffic-api-node:1.0
-  #   working_dir: "/workspace/src"
-  #   command: /bin/bash -c 'npm i && npm rebuild node-sass && npm run dev'
-  #   ports:
-  #     - 5173:5173
-  #   volumes:
-  #     - ../:/workspace:cached
-  #   environment:
-  #     - TZ=Asia/Tokyo
-  #     - HOST=0.0.0.0
+  node:
+    container_name: github-traffic-api-node
+    build:
+      context: ./node
+      dockerfile: ./Dockerfile
+    image: github-traffic-api-node:1.0
+    working_dir: "/workspace/src"
+    command: /bin/bash -c 'npm i && npm rebuild node-sass && npm run dev'
+    ports:
+      - 5173:5173
+    volumes:
+      - ../:/workspace:cached
+    environment:
+      - TZ=Asia/Tokyo
+      - HOST=0.0.0.0
 
   phpmyadmin:
     container_name: github-traffic-api-phpmyadmin

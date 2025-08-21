@@ -127,7 +127,7 @@
                 </ul>
             </div>
             <div class="mt-6">
-                <a href="{{ \App\Helpers\UrlHelper::adminUrl('repositories') }}" class="text-sm font-medium text-indigo-600 hover:text-indigo-500">
+                <a href="{{ route('admin.repositories') }}" class="text-sm font-medium text-indigo-600 hover:text-indigo-500">
                     すべてのリポジトリを表示 →
                 </a>
             </div>

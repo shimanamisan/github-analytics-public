@@ -18,15 +18,15 @@
                             <h1 class="text-xl font-bold text-gray-900">GitHub訪問数集計システム</h1>
                         </div>
                         <div class="hidden sm:ml-6 sm:flex sm:space-x-8">
-                            <a href="{{ \App\Helpers\UrlHelper::adminUrl() }}" 
+                            <a href="{{ route('admin.dashboard') }}" 
                                class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm {{ request()->routeIs('admin.dashboard') ? 'border-indigo-500 text-indigo-600' : '' }}">
                                 ダッシュボード
                             </a>
-                            <a href="{{ \App\Helpers\UrlHelper::adminUrl('repositories') }}" 
+                            <a href="{{ route('admin.repositories') }}" 
                                class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm {{ request()->routeIs('admin.repositories') ? 'border-indigo-500 text-indigo-600' : '' }}">
                                 リポジトリ管理
                             </a>
-                            <a href="{{ \App\Helpers\UrlHelper::githubUrl('views') }}" 
+                            <a href="{{ route('github.views') }}" 
                                class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm"
                                target="_blank">
                                 データ表示
@@ -37,7 +37,7 @@
                         <div class="ml-3 relative">
                             <div class="flex items-center space-x-4">
                                 <span class="text-sm text-gray-500">{{ Auth::user()->name ?? Auth::user()->email }}</span>
-                                <form method="POST" action="{{ \App\Helpers\UrlHelper::url('logout') }}" class="inline">
+                                <form method="POST" action="{{ route('logout') }}" class="inline">
                                     @csrf
                                     <button type="submit" class="bg-white text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                                         <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">

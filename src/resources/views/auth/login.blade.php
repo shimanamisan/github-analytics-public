@@ -23,7 +23,7 @@
                 </p>
             </div>
 
-            <form class="mt-8 space-y-6" method="POST" action="{{ \App\Helpers\UrlHelper::url('login') }}">
+            <form class="mt-8 space-y-6" method="POST" action="{{ route('login') }}">
                 @csrf
                 
                 @if($errors->any())
