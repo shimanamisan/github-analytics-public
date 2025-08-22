@@ -4,17 +4,12 @@ volumes:
   php-fpm-socket:
     name: github-traffic-api_php-fpm-socket
 
+# 共有ネットワークに接続
+networks:
+  nginx-proxy-manager-network:
+    external: true
+
 services:
-  nginx-proxy:
-    container_name: github-traffic-api-nginx-proxy
-    build:
-      context: ./proxy
-      dockerfile: ./Dockerfile
-    image: nginx-proxy-github-traffic-api:1.0
-    ports:
-      - 80:80
-    volumes:
-      - /var/run/docker.sock:/tmp/docker.sock:ro
 
   app:
     container_name: github-traffic-api-backend
@@ -25,6 +20,8 @@ services:
     volumes:
       - php-fpm-socket:/var/run/php-fpm
       - ../:/workspace:cached
+    networks:
+      - nginx-proxy-manager-network
 
   web:
     build:
@@ -35,11 +32,13 @@ services:
     volumes:
       - php-fpm-socket:/var/run/php-fpm
       - ../:/workspace:cached
-    env_file: .env
-    environment:
-      - VIRTUAL_HOST=${VIRTUAL_HOST}
+    # 内部ポートを公開（デバッグ用、本番では削除推奨）
+    expose:
+      - "80"
     depends_on:
       - app
+    networks:
+      - nginx-proxy-manager-network
 
   db:
     container_name: github-traffic-api-db
@@ -58,6 +57,8 @@ services:
       MYSQL_USER: ${MYSQL_USER}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    networks:
+      - nginx-proxy-manager-network
 
   node:
     container_name: github-traffic-api-node
@@ -74,6 +75,8 @@ services:
     environment:
       - TZ=Asia/Tokyo
       - HOST=0.0.0.0
+    networks:
+      - nginx-proxy-manager-network
 
   phpmyadmin:
     container_name: github-traffic-api-phpmyadmin
@@ -91,4 +94,5 @@ services:
       PMA_HOSTS: ${PMA_HOSTS}
       PMA_USER: ${PMA_USER}
       PMA_PASSWORD: ${PMA_PASSWORD}
-      VIRTUAL_HOST: ${VIRTUAL_HOST_PHPMYADMIN}
+    networks:
+      - nginx-proxy-manager-network
