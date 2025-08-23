@@ -138,15 +138,60 @@
         .no-data-message p {
             margin-bottom: 5px;
         }
+        .header-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .nav-links {
+            display: flex;
+            gap: 15px;
+        }
+        .nav-link {
+            color: #007bff;
+            text-decoration: none;
+            padding: 8px 16px;
+            border: 1px solid #007bff;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+        .nav-link:hover {
+            background-color: #007bff;
+            color: white;
+        }
+        .nav-link.admin {
+            background-color: #28a745;
+            border-color: #28a745;
+            color: white;
+        }
+        .nav-link.admin:hover {
+            background-color: #218838;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>GitHub訪問数集計システム</h1>
+        <div class="header-nav">
+            <h1>GitHub訪問数集計システム</h1>
+            <div class="nav-links">
+                @auth
+                    <a href="{{ route('admin.dashboard') }}" class="nav-link admin">管理画面</a>
+                    <form method="POST" action="{{ route('logout') }}" style="display: inline;">
+                        @csrf
+                        <button type="submit" class="nav-link" style="background: none; border: 1px solid #dc3545; color: #dc3545; cursor: pointer;">ログアウト</button>
+                    </form>
+                @else
+                    <a href="{{ route('login') }}" class="nav-link">ログイン</a>
+                @endauth
+            </div>
+        </div>
         
         <!-- フィルター -->
         <div class="filters">
-            <form method="GET" action="{{ route('github.views') }}" id="filterForm">
+            <form method="GET" action="{{ route('home') }}" id="filterForm">
                 <div class="filter-group">
                     <label for="project">プロジェクト:</label>
                     <select name="project" id="project">
