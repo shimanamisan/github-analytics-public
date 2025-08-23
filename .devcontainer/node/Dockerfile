@@ -1,10 +1,7 @@
-FROM node:18.16-buster
+FROM node:20.19-alpine
 
 # 必要なパッケージをインストール
-RUN apt-get update && \
-    apt-get install -y procps && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+RUN apk add --no-cache procps
 
 # # スクリプトをコンテナにコピー
 # COPY increase_watchers.sh /usr/local/bin/increase_watchers.sh

@@ -1,3 +1,6 @@
+# コンテナ名
+name: github-traffic-api
+
 volumes:
   db-store:
     name: github-traffic-api_db
@@ -32,7 +35,6 @@ services:
     volumes:
       - php-fpm-socket:/var/run/php-fpm
       - ../:/workspace:cached
-    # 内部ポートを公開（デバッグ用、本番では削除推奨）
     expose:
       - "80"
     depends_on:
@@ -67,9 +69,9 @@ services:
       dockerfile: ./Dockerfile
     image: github-traffic-api-node:1.0
     working_dir: "/workspace/src"
-    command: /bin/bash -c 'npm i && npm rebuild node-sass && npm run dev'
+    command: /bin/sh -c 'npm install && npm run dev'
     ports:
-      - 5173:5173
+      - 5174:5173
     volumes:
       - ../:/workspace:cached
     environment:

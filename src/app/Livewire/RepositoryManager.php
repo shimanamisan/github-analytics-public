@@ -5,6 +5,8 @@ namespace App\Livewire;
 use App\Models\GitHubRepository;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Log;
 
 class RepositoryManager extends Component
 {
@@ -25,6 +27,10 @@ class RepositoryManager extends Component
     // フィルタリング
     public $search = '';
     public $activeFilter = 'all';
+    
+    // 手動実行の状態管理
+    public $isFetching = false;
+    public $fetchMessage = '';
     
     protected $rules = [
         'owner' => 'required|string|max:255',
@@ -164,5 +170,104 @@ class RepositoryManager extends Component
     public function updatedActiveFilter()
     {
         $this->resetPage();
+    }
+
+    /**
+     * 特定のリポジトリの訪問数データを手動で取得
+     */
+    public function fetchViews($repositoryId)
+    {
+        try {
+            $this->isFetching = true;
+            $this->fetchMessage = 'データ取得中...';
+            
+            $repository = GitHubRepository::findOrFail($repositoryId);
+            
+            if (!$repository->is_active) {
+                session()->flash('error', 'このリポジトリは非アクティブです。データ取得を有効にしてください。');
+                return;
+            }
+            
+            // リポジトリ名を安全に取得
+            $repoName = $repository->display_name ?: $repository->full_name;
+            
+            // Artisanコマンドを実行
+            $exitCode = Artisan::call('github:fetch-views', [
+                '--repository' => $repositoryId
+            ]);
+            
+            if ($exitCode === 0) {
+                $this->fetchMessage = 'データ取得が完了しました';
+                session()->flash('message', "リポジトリ「{$repoName}」の訪問数データを正常に取得しました。");
+                
+                // ログに記録
+                Log::info('手動でGitHub訪問数データを取得しました', [
+                    'user' => auth()->user()->email,
+                    'repository' => $repository->full_name,
+                    'repository_id' => $repositoryId
+                ]);
+            } else {
+                $this->fetchMessage = 'データ取得中にエラーが発生しました';
+                session()->flash('error', 'データ取得中にエラーが発生しました。');
+            }
+            
+        } catch (\Exception $e) {
+            $this->fetchMessage = 'エラーが発生しました';
+            session()->flash('error', 'エラーが発生しました: ' . $e->getMessage());
+            
+            Log::error('手動GitHub訪問数データ取得エラー', [
+                'user' => auth()->user()->email,
+                'repository_id' => $repositoryId,
+                'error' => $e->getMessage()
+            ]);
+        } finally {
+            $this->isFetching = false;
+        }
+    }
+
+    /**
+     * すべてのアクティブなリポジトリの訪問数データを手動で取得
+     */
+    public function fetchAllViews()
+    {
+        try {
+            $this->isFetching = true;
+            $this->fetchMessage = '全リポジトリのデータ取得中...';
+            
+            $activeCount = GitHubRepository::where('is_active', true)->count();
+            
+            if ($activeCount === 0) {
+                session()->flash('error', 'アクティブなリポジトリがありません。');
+                return;
+            }
+            
+            // Artisanコマンドを実行
+            $exitCode = Artisan::call('github:fetch-views');
+            
+            if ($exitCode === 0) {
+                $this->fetchMessage = '全リポジトリのデータ取得が完了しました';
+                session()->flash('message', "全{$activeCount}件のリポジトリの訪問数データを正常に取得しました。");
+                
+                // ログに記録
+                Log::info('手動で全リポジトリのGitHub訪問数データを取得しました', [
+                    'user' => auth()->user()->email,
+                    'repository_count' => $activeCount
+                ]);
+            } else {
+                $this->fetchMessage = 'データ取得中にエラーが発生しました';
+                session()->flash('error', 'データ取得中にエラーが発生しました。');
+            }
+            
+        } catch (\Exception $e) {
+            $this->fetchMessage = 'エラーが発生しました';
+            session()->flash('error', 'エラーが発生しました: ' . $e->getMessage());
+            
+            Log::error('手動全リポジトリGitHub訪問数データ取得エラー', [
+                'user' => auth()->user()->email,
+                'error' => $e->getMessage()
+            ]);
+        } finally {
+            $this->isFetching = false;
+        }
     }
 }
