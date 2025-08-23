@@ -9,16 +9,19 @@ ENV COMPOSER_ALLOW_SUPERUSER 1
 ENV COMPOSER_HOME /composer
 # コマンドが実行できるようにパスを通す
 ENV PATH $PATH:/composer/vendor/bin
-
-EXPOSE 5173
+# ロケールを日本に設定
+ENV LANG ja_JP.UTF-8
+ENV LC_ALL ja_JP.UTF-8
+# タイムゾーンを日本に設定
+ENV TZ Asia/Tokyo
 
 RUN apt-get update && \
   # cron と supervisor を追加
-  apt-get -y install git cron supervisor libicu-dev libonig-dev libzip-dev unzip locales && \
+  apt-get -y install git cron supervisor libicu-dev libonig-dev libzip-dev unzip locales tzdata && \
   apt-get clean && \
   rm -rf /var/lib/apt/lists/* && \
-  locale-gen en_US.UTF-8 && \
-  localedef -f UTF-8 -i en_US en_US.UTF-8 && \
+  locale-gen ja_JP.UTF-8 && \
+  localedef -f UTF-8 -i ja_JP ja_JP.UTF-8 && \
   mkdir /var/run/php-fpm && \
   mkdir /var/log/php && \
   docker-php-ext-install intl pdo_mysql mbstring zip bcmath && \
