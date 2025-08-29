@@ -4,6 +4,18 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', [App\Http\Controllers\GitHubViewController::class, 'index'])->name('home');
 
+// GitHubフォロワー情報ルート
+Route::prefix('github')->name('github.')->group(function () {
+    Route::get('/followers', [App\Http\Controllers\GitHubFollowerController::class, 'index'])->name('followers');
+    Route::get('/follower-details', [App\Http\Controllers\GitHubFollowerController::class, 'details'])->name('follower-details');
+    
+    // API エンドポイント
+    Route::get('/api/followers/chart', [App\Http\Controllers\GitHubFollowerController::class, 'chart'])->name('followers.chart');
+    Route::get('/api/followers/stats', [App\Http\Controllers\GitHubFollowerController::class, 'stats'])->name('followers.stats');
+    Route::get('/api/followers/influential', [App\Http\Controllers\GitHubFollowerController::class, 'influential'])->name('followers.influential');
+    Route::get('/api/followers/recent', [App\Http\Controllers\GitHubFollowerController::class, 'recentActivity'])->name('followers.recent');
+});
+
 
 
 // 認証ルート
