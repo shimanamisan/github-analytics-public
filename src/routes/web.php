@@ -4,8 +4,8 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', [App\Http\Controllers\GitHubViewController::class, 'index'])->name('home');
 
-// GitHubフォロワー情報ルート
-Route::prefix('github')->name('github.')->group(function () {
+// GitHubフォロワー情報ルート（認証必須）
+Route::prefix('github')->name('github.')->middleware('auth')->group(function () {
     Route::get('/followers', [App\Http\Controllers\GitHubFollowerController::class, 'index'])->name('followers');
     Route::get('/follower-details', [App\Http\Controllers\GitHubFollowerController::class, 'details'])->name('follower-details');
     
@@ -28,4 +28,6 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
     Route::get('/', [App\Http\Controllers\AdminController::class, 'dashboard'])->name('dashboard');
     Route::get('/repositories', [App\Http\Controllers\AdminController::class, 'repositories'])->name('repositories');
     Route::get('/repositories/create', [App\Http\Controllers\AdminController::class, 'createRepository'])->name('repositories.create');
+    Route::get('/followers', [App\Http\Controllers\AdminController::class, 'followers'])->name('followers');
+    Route::get('/follower-details', [App\Http\Controllers\AdminController::class, 'followerDetails'])->name('follower-details');
 });

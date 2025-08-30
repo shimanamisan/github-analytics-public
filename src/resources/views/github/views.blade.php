@@ -339,8 +339,6 @@
             <h1>GitHub訪問数集計システム</h1>
             <div class="nav-links">
                 <a href="{{ route('home') }}" class="nav-link active">訪問数</a>
-                <a href="{{ route('github.followers') }}" class="nav-link">フォロワー統計</a>
-                <a href="{{ route('github.follower-details') }}" class="nav-link">フォロワー詳細</a>
                 @auth
                     <a href="{{ route('admin.dashboard') }}" class="nav-link admin">管理画面</a>
                     <form method="POST" action="{{ route('logout') }}" style="display: inline;">

@@ -331,9 +331,6 @@
         <div class="header-nav">
             <h1>GitHubフォロワー統計システム</h1>
             <div class="nav-links">
-                <a href="{{ route('home') }}" class="nav-link">訪問数</a>
-                <a href="{{ route('github.followers') }}" class="nav-link active">フォロワー統計</a>
-                <a href="{{ route('github.follower-details') }}" class="nav-link">フォロワー詳細</a>
                 @auth
                     <a href="{{ route('admin.dashboard') }}" class="nav-link">管理画面</a>
                 @endauth

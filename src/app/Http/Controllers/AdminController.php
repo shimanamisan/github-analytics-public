@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\GitHubRepository;
 use App\Models\GitHubView;
+use App\Models\GitHubFollower;
+use App\Models\GitHubFollowerDetail;
 
 class AdminController extends Controller
 {
@@ -36,5 +38,21 @@ class AdminController extends Controller
     public function createRepository()
     {
         return view('admin.create-repository');
+    }
+
+    /**
+     * フォロワー統計画面
+     */
+    public function followers()
+    {
+        return redirect()->route('github.followers');
+    }
+
+    /**
+     * フォロワー詳細画面
+     */
+    public function followerDetails()
+    {
+        return redirect()->route('github.follower-details');
     }
 }
