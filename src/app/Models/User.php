@@ -6,6 +6,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Contracts\Auth\CanResetPassword;
+use Illuminate\Database\Eloquent\Builder;
 
 class User extends Authenticatable
 {
@@ -22,6 +24,7 @@ class User extends Authenticatable
         'email',
         'password',
         'is_admin',
+        'is_active',
     ];
 
     /**
@@ -45,6 +48,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'is_admin' => 'boolean',
+            'is_active' => 'boolean',
         ];
     }
 
@@ -54,5 +58,45 @@ class User extends Authenticatable
     public function isAdmin(): bool
     {
         return $this->is_admin;
+    }
+
+    /**
+     * ユーザーが有効かどうかをチェック
+     */
+    public function isActive(): bool
+    {
+        return $this->is_active;
+    }
+
+    /**
+     * 管理者ユーザーのみを取得
+     */
+    public function scopeAdmins($query)
+    {
+        return $query->where('is_admin', true);
+    }
+
+    /**
+     * 一般ユーザーのみを取得
+     */
+    public function scopeRegularUsers($query)
+    {
+        return $query->where('is_admin', false);
+    }
+
+    /**
+     * 有効なユーザーのみを取得
+     */
+    public function scopeActive($query)
+    {
+        return $query->where('is_active', true);
+    }
+
+    /**
+     * 認証時に有効なユーザーのみを対象とする
+     */
+    public function scopeForAuthentication($query)
+    {
+        return $query->where('is_active', true);
     }
 }

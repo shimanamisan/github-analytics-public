@@ -60,7 +60,28 @@ class LoginController extends Controller
         $credentials = $request->only('email', 'password');
         $remember = $request->boolean('remember');
 
+        // ユーザーの有効状態をチェック
+        $user = \App\Models\User::where('email', $credentials['email'])->first();
+        
+        if ($user && !$user->is_active) {
+            throw ValidationException::withMessages([
+                'email' => 'このアカウントは無効化されています。管理者にお問い合わせください。',
+            ]);
+        }
+
         if (Auth::attempt($credentials, $remember)) {
+            // ログイン成功後にユーザーの状態を再チェック
+            $user = Auth::user();
+            if (!$user->is_active) {
+                Auth::logout();
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+                
+                throw ValidationException::withMessages([
+                    'email' => 'このアカウントは無効化されています。管理者にお問い合わせください。',
+                ]);
+            }
+            
             $request->session()->regenerate();
             return redirect()->intended(route('admin.dashboard'));
         }

@@ -178,6 +178,51 @@
                 </div>
             </div>
         </div>
+    </div>
+
+    <!-- ユーザー管理のクイックアクセス -->
+    <div class="bg-white shadow rounded-lg mb-8">
+        <div class="px-4 py-5 sm:p-6">
+            <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">ユーザー管理</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <svg class="h-8 w-8 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
+                            </svg>
+                        </div>
+                        <div class="ml-4">
+                            <h4 class="text-lg font-medium text-gray-900">ユーザー一覧</h4>
+                            <p class="text-sm text-gray-500">システムユーザーの一覧と管理を行います。</p>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <a href="{{ route('admin.users.index') }}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700">
+                            ユーザー管理
+                        </a>
+                    </div>
+                </div>
+
+                <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <svg class="h-8 w-8 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
+                            </svg>
+                        </div>
+                        <div class="ml-4">
+                            <h4 class="text-lg font-medium text-gray-900">新規ユーザー作成</h4>
+                            <p class="text-sm text-gray-500">新しいユーザーアカウントを作成します。</p>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <a href="{{ route('admin.users.create') }}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
+                            ユーザー作成
+                        </a>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>

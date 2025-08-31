@@ -95,7 +95,7 @@
                 <div class="text-center">
                     <p class="text-sm text-gray-600">
                         デフォルトログイン情報:<br>
-                        <span class="font-mono bg-gray-100 px-2 py-1 rounded">admin@example.com</span> / 
+                        <span class="font-mono bg-gray-100 px-2 py-1 rounded">user@example.com</span> / 
                         <span class="font-mono bg-gray-100 px-2 py-1 rounded">password</span>
                     </p>
                 </div>

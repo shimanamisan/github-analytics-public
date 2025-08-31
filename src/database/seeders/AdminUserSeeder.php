@@ -22,6 +22,7 @@ class AdminUserSeeder extends Seeder
                 'password' => Hash::make('password'),
                 'email_verified_at' => now(),
                 'is_admin' => false,
+                'is_active' => true,
             ]
         );
 
@@ -34,6 +35,7 @@ class AdminUserSeeder extends Seeder
                 'password' => Hash::make('admin123'),
                 'email_verified_at' => now(),
                 'is_admin' => true,
+                'is_active' => true,
             ]
         );
 
