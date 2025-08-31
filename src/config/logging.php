@@ -69,8 +69,9 @@ return [
             'driver' => 'daily',
             'path' => storage_path('logs/laravel.log'),
             'level' => env('LOG_LEVEL', 'debug'),
-            'days' => env('LOG_DAILY_DAYS', 14),
+            'days' => env('LOG_DAILY_DAYS', 7),
             'replace_placeholders' => true,
+            'permission' => 0664,
         ],
 
         'slack' => [
@@ -125,6 +126,15 @@ return [
 
         'emergency' => [
             'path' => storage_path('logs/laravel.log'),
+        ],
+
+        'github-commands' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/github-commands.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'days' => env('LOG_DAILY_DAYS', 7),
+            'replace_placeholders' => true,
+            'permission' => 0664,
         ],
 
     ],

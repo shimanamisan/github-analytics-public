@@ -13,7 +13,6 @@ Schedule::command('github:fetch-views')
     ->dailyAt('23:00')
     ->withoutOverlapping()
     ->runInBackground()
-    ->appendOutputTo(storage_path('logs/github-fetch.log'))
     ->onFailure(function () {
         \Log::error('GitHub訪問数取得スケジュールが失敗しました');
     });
@@ -23,17 +22,15 @@ Schedule::command('github:fetch-followers')
     ->dailyAt('23:30')
     ->withoutOverlapping()
     ->runInBackground()
-    ->appendOutputTo(storage_path('logs/github-followers.log'))
     ->onFailure(function () {
         \Log::error('GitHubフォロワー数取得スケジュールが失敗しました');
     });
 
-// 詳細フォロワー情報取得を毎週月曜日3:00に実行
+// 詳細フォロワー情報取得を毎日00:30に実行（API制限を考慮して時間を分ける）
 Schedule::command('github:fetch-followers --detailed')
-    ->weeklyOn(1, '03:00')
+    ->dailyAt('00:30')
     ->withoutOverlapping()
     ->runInBackground()
-    ->appendOutputTo(storage_path('logs/github-followers-detailed.log'))
     ->onFailure(function () {
         \Log::error('GitHub詳細フォロワー情報取得スケジュールが失敗しました');
     });

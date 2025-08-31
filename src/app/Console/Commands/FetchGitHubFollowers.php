@@ -31,6 +31,10 @@ class FetchGitHubFollowers extends Command
      */
     public function handle()
     {
+        // カスタムログチャンネルを使用
+        $githubLogger = Log::channel('github-commands');
+        
+        $githubLogger->info('GitHubフォロワー情報の取得を開始します...');
         $this->info('GitHubフォロワー情報の取得を開始します...');
 
         // ユーザー名の取得（GITHUB_USERNAMEまたはGITHUB_OWNERから取得）
@@ -49,20 +53,25 @@ class FetchGitHubFollowers extends Command
 
         try {
             // 基本統計情報を取得
+            $githubLogger->info("ユーザー統計情報を取得中: {$username}");
             $this->info("ユーザー統計情報を取得中: {$username}");
             $userStats = $this->fetchUserStats($username, $token);
             
             // 基本統計をデータベースに保存
             $this->saveUserStats($username, $userStats);
+            $githubLogger->info("✓ 基本統計情報を保存しました");
             $this->info("✓ 基本統計情報を保存しました");
 
             // 詳細フォロワー情報を取得（オプション）
             if ($this->option('detailed')) {
+                $githubLogger->info("詳細フォロワー情報を取得中...");
                 $this->info("詳細フォロワー情報を取得中...");
                 $followerCount = $this->fetchDetailedFollowers($username, $token);
+                $githubLogger->info("✓ 詳細フォロワー情報を取得しました: {$followerCount}人");
                 $this->info("✓ 詳細フォロワー情報を取得しました: {$followerCount}人");
             }
 
+            $githubLogger->info('フォロワー情報の取得が完了しました。');
             $this->info('フォロワー情報の取得が完了しました。');
             
             // 統計ログを記録
@@ -78,7 +87,9 @@ class FetchGitHubFollowers extends Command
             return 0;
 
         } catch (Exception $e) {
-            $this->error("エラーが発生しました: {$e->getMessage()}");
+            $errorMsg = "エラーが発生しました: {$e->getMessage()}";
+            $githubLogger->error($errorMsg);
+            $this->error($errorMsg);
             
             Log::error('GitHubフォロワー情報取得エラー', [
                 'username' => $username,
@@ -138,6 +149,9 @@ class FetchGitHubFollowers extends Command
      */
     private function fetchDetailedFollowers(string $username, string $token): int
     {
+        // カスタムログチャンネルを使用
+        $githubLogger = Log::channel('github-commands');
+        
         $page = 1;
         $perPage = 100;
         $totalProcessed = 0;
@@ -153,6 +167,7 @@ class FetchGitHubFollowers extends Command
         $currentFollowers = [];
 
         do {
+            $githubLogger->info("フォロワーページ {$page} を取得中...");
             $this->info("フォロワーページ {$page} を取得中...");
             
             $response = Http::withHeaders([
@@ -227,10 +242,14 @@ class FetchGitHubFollowers extends Command
                     'unfollowed_at' => now()
                 ]);
                 
-            $this->info("✓ フォロー解除されたユーザーを非アクティブにしました: " . count($unfollowedUsers) . "人");
+            $unfollowedMsg = "✓ フォロー解除されたユーザーを非アクティブにしました: " . count($unfollowedUsers) . "人";
+            $githubLogger->info($unfollowedMsg);
+            $this->info($unfollowedMsg);
         }
 
-        $this->info("詳細フォロワー情報処理完了: 新規 {$newFollowers}人, 更新 {$updatedFollowers}人");
+        $completionMsg = "詳細フォロワー情報処理完了: 新規 {$newFollowers}人, 更新 {$updatedFollowers}人";
+        $githubLogger->info($completionMsg);
+        $this->info($completionMsg);
 
         return $totalProcessed;
     }

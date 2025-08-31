@@ -31,6 +31,10 @@ class FetchGitHubViews extends Command
      */
     public function handle()
     {
+        // カスタムログチャンネルを使用
+        $githubLogger = Log::channel('github-commands');
+        
+        $githubLogger->info('GitHub訪問数データの取得を開始します...');
         $this->info('GitHub訪問数データの取得を開始します...');
 
         // 特定のリポジトリが指定されている場合
@@ -76,7 +80,9 @@ class FetchGitHubViews extends Command
             }
         }
 
-        $this->info("データ取得完了: 総新規 {$totalInserted}件, 総更新 {$totalUpdated}件, エラー {$errorCount}件");
+        $completionMsg = "データ取得完了: 総新規 {$totalInserted}件, 総更新 {$totalUpdated}件, エラー {$errorCount}件";
+        $githubLogger->info($completionMsg);
+        $this->info($completionMsg);
         
         // 統計ログを記録
         Log::info('GitHub訪問数データ取得完了（複数リポジトリ）', [
