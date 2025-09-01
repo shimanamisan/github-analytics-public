@@ -33,12 +33,18 @@ if [ -d "$LARAVEL_PATH/storage" ]; then
     chown -R h-nishihara:www-data "$LARAVEL_PATH/storage/logs"
     chmod -R 775 "$LARAVEL_PATH/storage/logs"
     
+    # SGIDビットを設定（新しく作成されるファイルがwww-dataグループになるように）
+    chmod g+s "$LARAVEL_PATH/storage/logs"
+    
     echo "Storage permissions fixed successfully"
 else
     echo "Storage directory not found, creating it..."
     mkdir -p "$LARAVEL_PATH/storage/logs"
     chown -R h-nishihara:www-data "$LARAVEL_PATH/storage"
     chmod -R 775 "$LARAVEL_PATH/storage"
+    
+    # SGIDビットを設定（新しく作成されるファイルがwww-dataグループになるように）
+    chmod g+s "$LARAVEL_PATH/storage/logs"
 fi
 
 # bootstrap/cacheディレクトリの権限修正

@@ -12,6 +12,7 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule): void
     {
+        // スケジュールはroutes/console.phpで定義されています
     }
 
     /**
