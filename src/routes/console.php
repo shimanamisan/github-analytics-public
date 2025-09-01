@@ -34,3 +34,27 @@ Schedule::command('github:fetch-followers --detailed')
     ->onFailure(function () {
         \Log::error('GitHub詳細フォロワー情報取得スケジュールが失敗しました');
     });
+
+// データベースバックアップを毎日02:00に実行（Gzip圧縮）
+Schedule::command('db:backup --format=gz')
+    ->dailyAt('02:00')
+    ->withoutOverlapping()
+    ->runInBackground()
+    ->onSuccess(function () {
+        \Log::info('データベースバックアップが正常に完了しました');
+    })
+    ->onFailure(function () {
+        \Log::error('データベースバックアップが失敗しました');
+    });
+
+// 週次データベースバックアップを毎週日曜日03:00に実行（非圧縮）
+Schedule::command('db:backup --format=sql')
+    ->weeklyOn(0, '03:00') // 日曜日の03:00
+    ->withoutOverlapping()
+    ->runInBackground()
+    ->onSuccess(function () {
+        \Log::info('週次データベースバックアップが正常に完了しました');
+    })
+    ->onFailure(function () {
+        \Log::error('週次データベースバックアップが失敗しました');
+    });
