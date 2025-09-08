@@ -72,36 +72,47 @@
         }
         
         .nav-link.admin {
-            background: #28a745;
-            color: #ffffff;
-            border-color: #28a745;
+            background: transparent;
+            color: #374151;
+            border: none;
+            font-weight: 500;
         }
         
         .nav-link.admin:hover {
-            background: #218838;
-            border-color: #218838;
+            background: transparent;
+            color: #111827;
+            text-decoration: underline;
         }
         
         .nav-link.active {
-            background: #0366d6;
-            color: #ffffff;
-            border-color: #0366d6;
+            background: transparent;
+            color: #374151;
+            border: none;
+            font-weight: 500;
+        }
+        
+        .nav-link.active:hover {
+            background: transparent;
+            color: #111827;
+            text-decoration: underline;
         }
         
         .nav-link.logout-btn {
-            background: #dc3545;
-            border: 1px solid #dc3545;
+            background: #111827;
+            border: 1px solid #111827;
             color: white;
             cursor: pointer;
             font-weight: 500;
             padding: 8px 16px;
             border-radius: 6px;
             font-size: 14px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
         }
         
         .nav-link.logout-btn:hover {
-            background: #c82333;
-            border-color: #c82333;
+            background: #000000;
+            border-color: #000000;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         }
         
         .main-content {
