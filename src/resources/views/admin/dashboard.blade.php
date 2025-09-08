@@ -90,7 +90,7 @@
     </div>
 
     <!-- 最近のアクティビティ -->
-    <div class="bg-white shadow rounded-lg">
+    <div class="bg-white shadow rounded-lg mb-8">
         <div class="px-4 py-5 sm:p-6">
             <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">最近のアクティビティ</h3>
             <div class="flow-root">
@@ -135,7 +135,7 @@
     </div>
 
     <!-- フォロワー関連のクイックアクセス -->
-    <div class="bg-white shadow rounded-lg">
+    <div class="bg-white shadow rounded-lg mb-8">
         <div class="px-4 py-5 sm:p-6">
             <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">フォロワー管理</h3>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
