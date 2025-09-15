@@ -1,0 +1,33 @@
+FROM node:20-alpine AS assets
+WORKDIR /app
+# 依存関係のみ先にコピー（キャッシュ最適化）
+COPY ./src/package*.json ./src/
+RUN cd ./src && npm ci
+COPY ./src ./src
+RUN cd ./src && npm run build
+
+FROM php:8.2-fpm AS base
+ENV TZ=Asia/Tokyo LANG=ja_JP.UTF-8 LC_ALL=ja_JP.UTF-8
+RUN apt-get update \
+  && apt-get -y install git libicu-dev libonig-dev libzip-dev unzip locales tzdata \
+  && apt-get clean && rm -rf /var/lib/apt/lists/* \
+  && locale-gen ja_JP.UTF-8 && localedef -f UTF-8 -i ja_JP ja_JP.UTF-8 \
+  && docker-php-ext-install intl pdo_mysql mbstring zip bcmath
+
+FROM base AS prod
+ENV APP_ENV=production APP_DEBUG=0
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+WORKDIR /var/www/html
+COPY ./src /var/www/html
+COPY --from=assets /app/src/public/build /var/www/html/public/build
+RUN composer install --no-dev --optimize-autoloader --no-interaction \
+  && php -v >/dev/null 2>&1 || true
+# Laravel を想定したキャッシュ（存在しない場合はスキップ）
+RUN php artisan config:cache || true \
+  && php artisan route:cache || true \
+  && php artisan view:cache || true
+RUN chown -R www-data:www-data /var/www/html
+USER www-data
+CMD ["php-fpm"]
+
+
