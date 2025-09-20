@@ -1,0 +1,18 @@
+# データベースインポート用の一時的な設定
+# 使用後は必ず停止してください
+
+services:
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:5.2.1-apache
+    container_name: github-traffic-api-phpmyadmin-import
+    ports:
+      - "8091:80"
+    environment:
+      PMA_ARBITRARY: 1
+      PMA_HOSTS: db
+      PMA_USER: ${MYSQL_USER}
+      PMA_PASSWORD: ${MYSQL_PASSWORD}
+    depends_on:
+      - db
+    networks:
+      - nginx-proxy-manager-network
