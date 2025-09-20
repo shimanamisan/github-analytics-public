@@ -1,8 +1,8 @@
 services:
   app:
     build:
-      context: ..
-      dockerfile: .devcontainer/php/Dockerfile.prod
+      context: ./php
+      dockerfile: ./Dockerfile.prod
     image: github-traffic-api-backend:prod
     environment:
       APP_ENV: production
@@ -20,8 +20,8 @@ services:
 
   web:
     build:
-      context: ./.devcontainer/nginx
-      dockerfile: Dockerfile.prod
+      context: ./nginx
+      dockerfile: ./Dockerfile.prod
     image: github-traffic-api-web:prod
     depends_on:
       - app
