@@ -1,9 +1,9 @@
 FROM node:20-alpine AS assets
 WORKDIR /app
 # 依存関係のみ先にコピー（キャッシュ最適化）
-COPY ./src/package*.json ./src/
+COPY ../src/package*.json ./src/
 RUN cd ./src && npm ci
-COPY ./src ./src
+COPY ../src ./src
 RUN cd ./src && npm run build
 
 FROM php:8.2-fpm AS base
@@ -18,7 +18,7 @@ FROM base AS prod
 ENV APP_ENV=production APP_DEBUG=0
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 WORKDIR /var/www/html
-COPY ./src /var/www/html
+COPY ../src /var/www/html
 COPY --from=assets /app/src/public/build /var/www/html/public/build
 # PHP-FPM設定ファイルをコピー（Unixソケット用）
 COPY ./php-fpm.d/zzz-www.conf /usr/local/etc/php-fpm.d/zzz-www.conf
