@@ -20,6 +20,8 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 WORKDIR /var/www/html
 COPY ./src /var/www/html
 COPY --from=assets /app/src/public/build /var/www/html/public/build
+# PHP-FPM設定ファイルをコピー（Unixソケット用）
+COPY ./php-fpm.d/zzz-www.conf /usr/local/etc/php-fpm.d/zzz-www.conf
 RUN composer install --no-dev --optimize-autoloader --no-interaction \
   && php -v >/dev/null 2>&1 || true
 # Laravel を想定したキャッシュ（存在しない場合はスキップ）
