@@ -52,7 +52,6 @@ services:
       - db-store:/var/lib/mysql
     ports:
       - 3333:3306
-    env_file: .env
     environment:
       TZ: ${TIME_ZONE}
       MYSQL_DATABASE: ${MYSQL_DATABASE}
@@ -90,7 +89,6 @@ services:
       - 8091:80
     depends_on:
       - db
-    env_file: .env
     environment:
       PMA_ARBITRARY: ${PMA_ARBITRARY}
       PMA_HOSTS: ${PMA_HOSTS}
