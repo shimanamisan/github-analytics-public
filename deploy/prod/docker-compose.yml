@@ -5,6 +5,8 @@ volumes:
     name: github-traffic-api_php-fpm-socket
   app-storage:
     name: github-traffic-api_app-storage
+  redis-data:
+    name: github-traffic-api_redis
 
 networks:
   nginx-proxy-manager-network:
@@ -13,14 +15,13 @@ networks:
 services:
   app:
     container_name: github-traffic-api-backend
-    build:
-      context: ../..
-      dockerfile: deploy/docker/php/Dockerfile
-    image: github-traffic-api-backend:prod
+    image: ${REGISTRY_URL}/app:${IMAGE_TAG:-latest}
     environment:
       APP_ENV: production
       APP_DEBUG: "false"
       TZ: Asia/Tokyo
+    env_file:
+      - .env
     volumes:
       - php-fpm-socket:/var/run/php-fpm
       - app-storage:/var/www/html/storage
@@ -30,15 +31,17 @@ services:
       interval: 30s
       timeout: 5s
       retries: 3
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     networks:
       - nginx-proxy-manager-network
 
   web:
     container_name: github-traffic-api-web
-    build:
-      context: ../..
-      dockerfile: deploy/docker/nginx/Dockerfile
-    image: github-traffic-api-web:prod
+    image: ${REGISTRY_URL}/web:${IMAGE_TAG:-latest}
     depends_on:
       - app
     expose:
@@ -56,13 +59,11 @@ services:
 
   db:
     container_name: github-traffic-api-db
-    build:
-      context: ../..
-      dockerfile: deploy/docker/mysql/Dockerfile
-    image: github-traffic-api-db:prod
+    image: ${REGISTRY_URL}/db:${IMAGE_TAG:-latest}
     volumes:
       - db-store:/var/lib/mysql
-    env_file: .env
+    env_file:
+      - .env
     environment:
       TZ: ${TIME_ZONE}
       MYSQL_DATABASE: ${MYSQL_DATABASE}
@@ -75,5 +76,64 @@ services:
       interval: 30s
       timeout: 5s
       retries: 5
+    networks:
+      - nginx-proxy-manager-network
+
+  redis:
+    container_name: github-traffic-api-redis
+    image: redis:7-alpine
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes --requirepass "${REDIS_PASSWORD:-}"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+    networks:
+      - nginx-proxy-manager-network
+
+  # Laravel Scheduler（Cronジョブ実行）
+  scheduler:
+    container_name: github-traffic-api-scheduler
+    image: ${REGISTRY_URL}/app:${IMAGE_TAG:-latest}
+    command: php artisan schedule:work
+    environment:
+      APP_ENV: production
+      APP_DEBUG: "false"
+      TZ: Asia/Tokyo
+    env_file:
+      - .env
+    volumes:
+      - app-storage:/var/www/html/storage
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - nginx-proxy-manager-network
+
+  # Laravel Queue Worker
+  worker:
+    container_name: github-traffic-api-worker
+    image: ${REGISTRY_URL}/app:${IMAGE_TAG:-latest}
+    command: php artisan queue:work redis --sleep=3 --tries=3 --max-time=3600
+    environment:
+      APP_ENV: production
+      APP_DEBUG: "false"
+      TZ: Asia/Tokyo
+    env_file:
+      - .env
+    volumes:
+      - app-storage:/var/www/html/storage
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     networks:
       - nginx-proxy-manager-network
