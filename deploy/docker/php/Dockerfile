@@ -14,7 +14,9 @@ RUN apt-get update \
   && apt-get -y install git libicu-dev libonig-dev libzip-dev unzip locales tzdata \
   && apt-get clean && rm -rf /var/lib/apt/lists/* \
   && locale-gen ja_JP.UTF-8 && localedef -f UTF-8 -i ja_JP ja_JP.UTF-8 \
-  && docker-php-ext-install intl pdo_mysql mbstring zip bcmath
+  && docker-php-ext-install intl pdo_mysql mbstring zip bcmath \
+  && pecl install redis \
+  && docker-php-ext-enable redis
 
 # 本番用ステージ
 FROM base AS prod

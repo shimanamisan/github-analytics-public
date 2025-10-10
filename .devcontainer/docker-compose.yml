@@ -6,6 +6,8 @@ volumes:
     name: github-traffic-api_db
   php-fpm-socket:
     name: github-traffic-api_php-fpm-socket
+  redis-data:
+    name: github-traffic-api_redis
 
 # 共有ネットワークに接続
 networks:
@@ -58,6 +60,23 @@ services:
       MYSQL_USER: ${MYSQL_USER}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    networks:
+      - nginx-proxy-manager-network
+
+  redis:
+    container_name: github-traffic-api-redis
+    image: redis:7-alpine
+    volumes:
+      - redis-data:/data
+    ports:
+      - 6379:6379
+    command: redis-server --appendonly yes --requirepass "${REDIS_PASSWORD:-}"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
     networks:
       - nginx-proxy-manager-network
 

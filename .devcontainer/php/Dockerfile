@@ -25,9 +25,9 @@ RUN apt-get update && \
   mkdir /var/run/php-fpm && \
   mkdir /var/log/php && \
   docker-php-ext-install intl pdo_mysql mbstring zip bcmath && \
-  pecl install xdebug && \
-  # Xdebug を有効化する
-  docker-php-ext-enable xdebug
+  pecl install xdebug redis && \
+  # Xdebug と Redis を有効化する
+  docker-php-ext-enable xdebug redis
 
 COPY ./php-fpm.d/zzz-www.conf /usr/local/etc/php-fpm.d/zzz-www.conf
 COPY ./php.ini /usr/local/etc/php/php.ini
