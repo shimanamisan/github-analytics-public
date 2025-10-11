@@ -3,15 +3,17 @@
 
 services:
   phpmyadmin:
-    image: phpmyadmin/phpmyadmin:5.2.1-apache
-    container_name: github-traffic-api-phpmyadmin-import
+    image: phpmyadmin:latest
+    container_name: github-traffic-api-phpmyadmin
     ports:
       - "8091:80"
     environment:
       PMA_ARBITRARY: 1
-      PMA_HOSTS: db
+      PMA_HOST: db
+      PMA_PORT: 3306
       PMA_USER: ${MYSQL_USER}
       PMA_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
     depends_on:
       - db
     networks:
