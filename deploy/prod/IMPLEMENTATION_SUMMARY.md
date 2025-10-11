@@ -32,6 +32,10 @@ GitHub Actionsを使用した自動デプロイシステムとRedis統合が完�
   - **Redis（新規追加）**
   - Laravel Scheduler
   - Laravel Queue Worker
+  - phpMyAdmin（プロファイル: tools）
+
+- [`deploy/prod/docker-compose.local.yml`](docker-compose.local.yml)
+  - ローカル検証用（レジストリではなくビルドコンテキストを使用）
 
 ### 環境設定
 

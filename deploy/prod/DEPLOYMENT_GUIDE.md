@@ -35,15 +35,29 @@
 
 GitHub Container Registry へのアクセスに必要です。
 
+#### Fine-grained tokens（推奨）
+
 1. GitHub にログイン
-2. **Settings** → **Developer settings** → **Personal access tokens** → **Tokens (classic)**
-3. **Generate new token (classic)** をクリック
-4. 以下の権限を選択：
+2. **Settings** → **Developer settings** → **Personal access tokens** → **Fine-grained tokens**
+3. **Generate new token** をクリック
+4. **Repository access**: `Only select repositories` → リポジトリを選択
+5. **Repository permissions**:
+   - ✅ `Contents`: Read and write
+   - ✅ `Packages`: Read and write（重要！）
+   - ✅ `Metadata`: Read-only（自動）
+6. トークンを生成し、**必ず安全な場所に保存**
+
+#### Classic tokens（代替）
+
+Fine-grained tokensで `Packages` 権限が見つからない場合：
+
+1. **Settings** → **Developer settings** → **Personal access tokens** → **Tokens (classic)**
+2. **Generate new token (classic)** をクリック
+3. 以下の権限を選択：
    - ✅ `write:packages` - パッケージのアップロード
    - ✅ `read:packages` - パッケージの読み取り
-   - ✅ `delete:packages` - 古いイメージの削除（オプション）
    - ✅ `repo` - プライベートリポジトリの場合
-5. トークンを生成し、**必ず安全な場所に保存**
+4. トークンを生成し、**必ず安全な場所に保存**
 
 ### 2. リポジトリ設定
 
@@ -339,6 +353,28 @@ docker compose exec db mysqldump -u root -p github_traffic_api > backup_$(date +
 docker compose exec -T db mysql -u root -p github_traffic_api < backup_20250101.sql
 ```
 
+### phpMyAdminの起動
+
+データベース管理用のGUIツールとしてphpMyAdminを利用できます。
+
+```bash
+cd ~/deploy/github-traffic-api
+
+# phpMyAdminを起動（プロファイル指定が必要）
+docker compose --profile tools up -d phpmyadmin
+
+# アクセス
+# ブラウザで http://サーバーIP:8091 を開く
+
+# 停止（不要時は停止を推奨）
+docker compose --profile tools down phpmyadmin
+```
+
+**セキュリティ上の注意**:
+- phpMyAdminは必要な時のみ起動してください
+- 作業完了後は必ず停止することを推奨
+- 本番環境では外部からのアクセスを制限してください
+
 ---
 
 ## 🐛 トラブルシューティング
@@ -387,6 +423,28 @@ docker compose logs db
 # データベース接続テスト
 docker compose exec app php artisan tinker
 >>> DB::connection()->getPdo();
+```
+
+**症状**: `SQLSTATE[HY000] [1045] Access denied for user`
+
+**解決策**:
+```bash
+# .envファイルのデータベース設定を確認
+cat .env | grep -E "(MYSQL_DATABASE|DB_DATABASE|MYSQL_USER|DB_USERNAME|MYSQL_PASSWORD|DB_PASSWORD)"
+
+# 重要: MYSQL_DATABASE と DB_DATABASE は同じ値でなければなりません
+# 正しい設定例:
+# MYSQL_DATABASE=github_traffic_api
+# DB_DATABASE=github_traffic_api  ← 同じ値
+# MYSQL_USER=github_traffic_user
+# DB_USERNAME=github_traffic_user  ← 同じ値
+# MYSQL_PASSWORD=your_password
+# DB_PASSWORD=your_password  ← 同じ値
+
+# 設定が異なる場合は修正して、古いボリュームを削除
+docker compose down
+docker volume rm github-traffic-api_db
+docker compose up -d
 ```
 
 ### 4. Redis接続エラー
