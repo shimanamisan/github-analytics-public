@@ -104,38 +104,39 @@ services:
     networks:
       - nginx-proxy-manager-network
 
-  scheduler:
-    container_name: github-traffic-api-scheduler
-    image: github-traffic-api-backend:local
-    command: php artisan schedule:work
-    environment:
-      APP_ENV: production
-      APP_DEBUG: "false"
-      TZ: Asia/Tokyo
-    env_file:
-      - .env
-    volumes:
-      - app-storage:/var/www/html/storage
-    restart: unless-stopped
-    depends_on:
-      - app
-    networks:
-      - nginx-proxy-manager-network
+  # 検証段階ではコメントアウト（appコンテナが正常に動作してから有効化）
+  # scheduler:
+  #   container_name: github-traffic-api-scheduler
+  #   image: github-traffic-api-backend:local
+  #   command: php artisan schedule:work
+  #   environment:
+  #     APP_ENV: production
+  #     APP_DEBUG: "false"
+  #     TZ: Asia/Tokyo
+  #   env_file:
+  #     - .env
+  #   volumes:
+  #     - app-storage:/var/www/html/storage
+  #   restart: unless-stopped
+  #   depends_on:
+  #     - app
+  #   networks:
+  #     - nginx-proxy-manager-network
 
-  worker:
-    container_name: github-traffic-api-worker
-    image: github-traffic-api-backend:local
-    command: php artisan queue:work redis --sleep=3 --tries=3 --max-time=3600
-    environment:
-      APP_ENV: production
-      APP_DEBUG: "false"
-      TZ: Asia/Tokyo
-    env_file:
-      - .env
-    volumes:
-      - app-storage:/var/www/html/storage
-    restart: unless-stopped
-    depends_on:
-      - app
-    networks:
-      - nginx-proxy-manager-network
+  # worker:
+  #   container_name: github-traffic-api-worker
+  #   image: github-traffic-api-backend:local
+  #   command: php artisan queue:work redis --sleep=3 --tries=3 --max-time=3600
+  #   environment:
+  #     APP_ENV: production
+  #     APP_DEBUG: "false"
+  #     TZ: Asia/Tokyo
+  #   env_file:
+  #     - .env
+  #   volumes:
+  #     - app-storage:/var/www/html/storage
+  #   restart: unless-stopped
+  #   depends_on:
+  #     - app
+  #   networks:
+  #     - nginx-proxy-manager-network

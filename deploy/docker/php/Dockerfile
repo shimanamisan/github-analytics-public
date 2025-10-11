@@ -35,6 +35,10 @@ RUN composer install --no-dev --optimize-autoloader --no-interaction
 # PHP-FPM設定ファイルをコピー（Unixソケット用）
 COPY deploy/docker/php/php-fpm.conf /usr/local/etc/php-fpm.d/zzz-www.conf
 
+# PHP-FPMソケット用ディレクトリ作成
+RUN mkdir -p /var/run/php-fpm \
+  && chown -R www-data:www-data /var/run/php-fpm
+
 # Laravel用キャッシュ（存在しない場合はスキップ）
 RUN php artisan config:cache || true \
   && php artisan route:cache || true \
