@@ -116,24 +116,25 @@ services:
     networks:
       - nginx-proxy-manager-network
 
-  # Laravel Queue Worker
-  worker:
-    container_name: github-traffic-api-worker
-    image: ${REGISTRY_URL}/app:${IMAGE_TAG:-latest}
-    command: php artisan queue:work redis --sleep=3 --tries=3 --max-time=3600
+  # phpMyAdmin（データベース管理用）
+  # セキュリティのため、必要な時だけ起動することを推奨
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: github-traffic-api-phpmyadmin
+    ports:
+      - "8091:80"
     environment:
-      APP_ENV: production
-      APP_DEBUG: "false"
-      TZ: Asia/Tokyo
-    env_file:
-      - .env
-    volumes:
-      - app-storage:/var/www/html/storage
-    restart: unless-stopped
+      PMA_ARBITRARY: 1
+      PMA_HOST: db
+      PMA_PORT: 3306
+      PMA_USER: ${MYSQL_USER}
+      PMA_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
     depends_on:
       db:
         condition: service_healthy
-      redis:
-        condition: service_healthy
+    restart: "no"  # 自動起動しない（手動で起動する）
+    profiles:
+      - tools  # プロファイルで制御（デフォルトでは起動しない）
     networks:
       - nginx-proxy-manager-network
