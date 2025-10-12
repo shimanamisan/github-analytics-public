@@ -86,6 +86,11 @@ sleep 10
 log_info "Running database migrations..."
 docker compose exec -T app php artisan migrate --force
 
+# 管理者ユーザーの作成（初回デプロイ時 or 未作成時）
+log_info "Running AdminUserSeeder..."
+docker compose exec -T app php artisan db:seed --class=AdminUserSeeder --force
+log_success "AdminUserSeeder completed"
+
 # キャッシュクリア＆最適化
 log_info "Clearing and optimizing caches..."
 docker compose exec -T app php artisan config:cache
