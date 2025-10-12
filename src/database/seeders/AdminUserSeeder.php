@@ -28,11 +28,11 @@ class AdminUserSeeder extends Seeder
 
         // 実際の管理者アカウントを作成
         User::updateOrCreate(
-            ['email' => 'admin@example.com'],
+            ['email' => 'mikan.sup.all@gmail.com'],
             [
                 'name' => 'システム管理者',
-                'email' => 'admin@example.com',
-                'password' => Hash::make('admin123'),
+                'email' => 'mikan.sup.all@gmail.com',
+                'password' => Hash::make('UsaosAn1987'),
                 'email_verified_at' => now(),
                 'is_admin' => true,
                 'is_active' => true,
@@ -41,6 +41,6 @@ class AdminUserSeeder extends Seeder
 
         $this->command->info('ユーザーアカウントを作成しました。');
         $this->command->info('一般ユーザー: user@example.com / password');
-        $this->command->info('管理者: admin@example.com / admin123');
+        $this->command->info('管理者: mikan.sup.all@gmail.com / UsaosAn1987');
     }
 }
