@@ -117,7 +117,7 @@ services:
       - nginx-proxy-manager-network
 
   # phpMyAdmin（データベース管理用）
-  # セキュリティのため、必要な時だけ起動することを推奨
+  # ローカルホストからのみアクセス可能
   phpmyadmin:
     image: phpmyadmin:latest
     container_name: github-traffic-api-phpmyadmin
@@ -133,8 +133,6 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    restart: "no"  # 自動起動しない（手動で起動する）
-    profiles:
-      - tools  # プロファイルで制御（デフォルトでは起動しない）
+    restart: unless-stopped
     networks:
       - nginx-proxy-manager-network
