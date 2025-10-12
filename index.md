@@ -105,3 +105,93 @@ php artisan github:fetch-followers --user=your-username --detailed
 - **成長率分析**
 
 この実装により、リポジトリの人気度とアカウント全体の影響力を包括的に分析できるようになります。
+
+## データベースバックアップ取得手順
+
+本番環境からデータベースバックアップファイルを取得する方法です。
+
+### バックアップファイルの保存場所
+
+- **コンテナ内**: `/var/www/html/storage/backups/database/`
+- **ホスト側**: Dockerボリューム `app-storage` にマウント
+- **自動バックアップ**: 毎日午前2時に実行（30日間保持）
+
+### 推奨の取得手順
+
+#### 1. 本番サーバーにSSH接続
+```bash
+ssh ユーザー名@本番サーバー
+```
+
+#### 2. バックアップファイル一覧を確認
+```bash
+docker exec github-traffic-api-backend ls -lh /var/www/html/storage/backups/database/
+```
+
+出力例：
+```
+-rw-r--r-- 1 www-data www-data 1.2M Oct 12 02:00 backup_2025-10-12_02-00-00.sql.gz
+-rw-r--r-- 1 www-data www-data 1.1M Oct 11 02:00 backup_2025-10-11_02-00-00.sql.gz
+```
+
+#### 3. 取得したいファイルをホームディレクトリにコピー
+```bash
+docker cp github-traffic-api-backend:/var/www/html/storage/backups/database/backup_2025-10-12_02-00-00.sql.gz ~/
+```
+
+#### 4. ローカルマシンに転送（ローカルマシンから実行）
+```bash
+scp ユーザー名@本番サーバー:~/backup_2025-10-12_02-00-00.sql.gz ./
+```
+
+### 代替方法：直接転送
+
+本番サーバーから直接ローカルマシンに転送する場合：
+
+```bash
+# ローカルマシンから実行
+ssh ユーザー名@本番サーバー "docker exec github-traffic-api-backend cat /var/www/html/storage/backups/database/backup_2025-10-12_02-00-00.sql.gz" > backup_2025-10-12_02-00-00.sql.gz
+```
+
+### 最新のバックアップを自動取得
+
+```bash
+# 本番サーバーで実行
+LATEST_BACKUP=$(docker exec github-traffic-api-backend ls -t /var/www/html/storage/backups/database/ | head -1)
+docker cp github-traffic-api-backend:/var/www/html/storage/backups/database/$LATEST_BACKUP ~/
+
+# ローカルマシンに転送
+scp ユーザー名@本番サーバー:~/$LATEST_BACKUP ./
+```
+
+### バックアップファイルのリストア
+
+#### phpMyAdminでリストア
+1. phpMyAdminにアクセス（http://localhost:8091）
+2. 左サイドバーでデータベースを選択
+3. 「インポート」タブをクリック
+4. バックアップファイル（.sql.gz）を選択してインポート
+
+#### コマンドラインでリストア
+```bash
+# .gz ファイルを直接リストア
+gunzip < backup_2025-10-12_02-00-00.sql.gz | mysql -u ユーザー名 -p
+
+# または Docker経由でリストア
+gunzip < backup_2025-10-12_02-00-00.sql.gz | docker exec -i github-traffic-api-db mysql -u ユーザー名 -p パスワード
+```
+
+### バックアップの作成
+
+手動でバックアップを作成する場合：
+
+```bash
+# 本番サーバーで実行
+docker exec github-traffic-api-backend php artisan db:backup --format=gz
+```
+
+### 注意事項
+
+- バックアップファイルは30日間保持され、それ以降は自動的に削除されます
+- 重要なバックアップは別途保存することを推奨します
+- バックアップファイルには機密情報が含まれるため、取り扱いには十分注意してください

@@ -115,6 +115,8 @@ class BackupDatabase extends Command
             fwrite($file, "-- Generated on: " . date('Y-m-d H:i:s') . "\n");
             fwrite($file, "-- Database: {$dbConfig['database']}\n");
             fwrite($file, "-- Host: {$dbConfig['host']}\n\n");
+            fwrite($file, "CREATE DATABASE IF NOT EXISTS `{$dbConfig['database']}`;\n");
+            fwrite($file, "USE `{$dbConfig['database']}`;\n\n");
             fwrite($file, "SET FOREIGN_KEY_CHECKS=0;\n");
             fwrite($file, "SET SQL_MODE=\"NO_AUTO_VALUE_ON_ZERO\";\n");
             fwrite($file, "SET AUTOCOMMIT=0;\n");
