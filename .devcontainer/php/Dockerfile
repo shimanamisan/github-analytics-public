@@ -16,8 +16,8 @@ ENV LC_ALL ja_JP.UTF-8
 ENV TZ Asia/Tokyo
 
 RUN apt-get update && \
-  # cron と supervisor を追加
-  apt-get -y install git cron supervisor libicu-dev libonig-dev libzip-dev unzip locales tzdata && \
+  # 必要なパッケージをインストール（supervisorは不要：PHP-FPMを直接起動）
+  apt-get -y install git libicu-dev libonig-dev libzip-dev unzip locales tzdata && \
   apt-get clean && \
   rm -rf /var/lib/apt/lists/* && \
   locale-gen ja_JP.UTF-8 && \
@@ -31,31 +31,18 @@ RUN apt-get update && \
 
 COPY ./php-fpm.d/zzz-www.conf /usr/local/etc/php-fpm.d/zzz-www.conf
 COPY ./php.ini /usr/local/etc/php/php.ini
-# cronの設定内容が書かれたファイルをコンテナ内にコピーする
-COPY ./cron/h-nishihara /etc/cron.d/cron
-# supervisordの設定ファイルをコピーする
-COPY ./supervisord/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 # スクリプトをコンテナにコピー
-COPY ./shell/check_artisan.sh /usr/local/bin/check_artisan
 COPY ./shell/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 COPY ./shell/fix-laravel-permissions.sh /usr/local/bin/fix-laravel-permissions.sh
 
 WORKDIR /workspace
 
 RUN useradd -m -s /bin/bash h-nishihara && \
-    # cronファイルの権限を変更
-    chmod 0644 /etc/cron.d/cron && \
-    # cronで使用するログファイルの作成とファイルへのアクセス権限を付与する
-    touch /var/log/cron.log && \
-    chmod 0644 /var/log/cron.log && \
-    chown h-nishihara:h-nishihara /var/log/cron.log && \
     # Xebugで使用するログファイルの作成とファイルへのアクセス権限を付与する
     touch /var/log/xdebug.log && \
     chown h-nishihara:h-nishihara /var/log/xdebug.log && \
     chmod 644 /var/log/xdebug.log && \
-    # check_artisanの権限を変更
-    chown h-nishihara:h-nishihara /usr/local/bin/check_artisan && \
-    chmod +x /usr/local/bin/check_artisan && \
+    # スクリプトの権限を変更
     chown h-nishihara:h-nishihara /usr/local/bin/docker-entrypoint.sh && \
     chmod +x /usr/local/bin/docker-entrypoint.sh && \
     chown h-nishihara:h-nishihara /usr/local/bin/fix-laravel-permissions.sh && \
@@ -65,5 +52,5 @@ RUN useradd -m -s /bin/bash h-nishihara && \
     usermod -a -G www-data h-nishihara
     
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
-# supervisordを起動
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+# PHP-FPMを直接起動（フォアグラウンドモード）
+CMD ["php-fpm", "-F"]

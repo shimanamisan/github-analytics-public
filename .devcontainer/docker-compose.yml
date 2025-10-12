@@ -98,6 +98,30 @@ services:
     networks:
       - nginx-proxy-manager-network
 
+  # Laravel Scheduler（開発環境）
+  scheduler:
+    container_name: github-traffic-api-scheduler
+    image: github-traffic-api-backend:1.0
+    working_dir: /workspace/src
+    # ENTRYPOINTをスキップして直接コマンドを実行
+    entrypoint: []
+    command: php artisan schedule:work --verbose
+    volumes:
+      - ../:/workspace:cached
+    environment:
+      APP_ENV: local
+      APP_DEBUG: "true"
+      TZ: Asia/Tokyo
+      # デバッグ用：スケジュールの詳細ログを有効化
+      SCHEDULE_DEBUG: "true"
+    depends_on:
+      - app
+      - db
+      - redis
+    restart: unless-stopped
+    networks:
+      - nginx-proxy-manager-network
+
   phpmyadmin:
     container_name: github-traffic-api-phpmyadmin
     build:
