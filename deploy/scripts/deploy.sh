@@ -80,7 +80,49 @@ docker compose up -d
 
 # ヘルスチェック待機
 log_info "Waiting for services to be healthy..."
-sleep 10
+MAX_WAIT=60
+WAIT_COUNT=0
+while [ $WAIT_COUNT -lt $MAX_WAIT ]; do
+    DB_HEALTHY=$(docker compose ps db --format json | grep -o '"Health":"[^"]*"' | cut -d'"' -f4)
+    APP_HEALTHY=$(docker compose ps app --format json | grep -o '"Health":"[^"]*"' | cut -d'"' -f4)
+
+    if [ "$DB_HEALTHY" = "healthy" ] && [ "$APP_HEALTHY" = "healthy" ]; then
+        log_success "All services are healthy!"
+        break
+    fi
+
+    WAIT_COUNT=$((WAIT_COUNT + 1))
+    log_info "Waiting for services... ($WAIT_COUNT/$MAX_WAIT) - DB: $DB_HEALTHY, App: $APP_HEALTHY"
+    sleep 2
+done
+
+if [ $WAIT_COUNT -eq $MAX_WAIT ]; then
+    log_error "Services did not become healthy in time!"
+    docker compose ps
+    docker compose logs --tail=50 app
+    docker compose logs --tail=50 db
+    exit 1
+fi
+
+# データベース接続確認（追加の安全チェック）
+log_info "Verifying database connection..."
+MAX_DB_RETRIES=10
+DB_RETRY_COUNT=0
+while [ $DB_RETRY_COUNT -lt $MAX_DB_RETRIES ]; do
+    if docker compose exec -T app php artisan db:show > /dev/null 2>&1; then
+        log_success "Database connection verified!"
+        break
+    fi
+    DB_RETRY_COUNT=$((DB_RETRY_COUNT + 1))
+    log_info "Database connection check... retry $DB_RETRY_COUNT/$MAX_DB_RETRIES"
+    sleep 2
+done
+
+if [ $DB_RETRY_COUNT -eq $MAX_DB_RETRIES ]; then
+    log_error "Could not establish database connection!"
+    docker compose logs --tail=50 app
+    exit 1
+fi
 
 # データベースマイグレーション実行
 log_info "Running database migrations..."
