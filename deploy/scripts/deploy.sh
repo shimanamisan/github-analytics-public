@@ -104,6 +104,10 @@ if [ $WAIT_COUNT -eq $MAX_WAIT ]; then
     exit 1
 fi
 
+# 設定キャッシュをクリア（実行時の環境変数を使用するため）
+log_info "Clearing configuration cache..."
+docker compose exec -T app php artisan config:clear || true
+
 # データベース接続確認（追加の安全チェック）
 log_info "Verifying database connection..."
 MAX_DB_RETRIES=15
