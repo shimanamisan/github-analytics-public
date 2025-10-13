@@ -106,23 +106,36 @@ fi
 
 # データベース接続確認（追加の安全チェック）
 log_info "Verifying database connection..."
-MAX_DB_RETRIES=10
+MAX_DB_RETRIES=15
 DB_RETRY_COUNT=0
 while [ $DB_RETRY_COUNT -lt $MAX_DB_RETRIES ]; do
-    if docker compose exec -T app php artisan db:show > /dev/null 2>&1; then
-        log_success "Database connection verified!"
-        break
-    fi
     DB_RETRY_COUNT=$((DB_RETRY_COUNT + 1))
-    log_info "Database connection check... retry $DB_RETRY_COUNT/$MAX_DB_RETRIES"
-    sleep 2
-done
 
-if [ $DB_RETRY_COUNT -eq $MAX_DB_RETRIES ]; then
-    log_error "Could not establish database connection!"
-    docker compose logs --tail=50 app
-    exit 1
-fi
+    # 最後のリトライではエラー内容を表示
+    if [ $DB_RETRY_COUNT -eq $MAX_DB_RETRIES ]; then
+        log_info "Final connection attempt with detailed output..."
+        if docker compose exec -T app php artisan db:show; then
+            log_success "Database connection verified!"
+            break
+        else
+            log_error "Could not establish database connection!"
+            log_info "Checking environment variables..."
+            docker compose exec -T app env | grep -E "(DB_|MYSQL_)" | grep -v PASSWORD
+            log_info "Checking app container logs..."
+            docker compose logs --tail=50 app
+            log_info "Checking db container logs..."
+            docker compose logs --tail=30 db
+            exit 1
+        fi
+    else
+        if docker compose exec -T app php artisan db:show > /dev/null 2>&1; then
+            log_success "Database connection verified!"
+            break
+        fi
+        log_info "Database connection check... retry $DB_RETRY_COUNT/$MAX_DB_RETRIES"
+        sleep 3
+    fi
+done
 
 # データベースマイグレーション実行
 log_info "Running database migrations..."
