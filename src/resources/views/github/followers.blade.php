@@ -1,529 +1,269 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GitHubフォロワー統計システム</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        * {
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            margin: 0;
-            padding: 0;
-            background: #ffffff;
-            min-height: 100vh;
-            color: #24292e;
-        }
-        
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background: #ffffff;
-            padding: 0;
-            border: 1px solid #e1e4e8;
-            border-radius: 6px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            margin-top: 16px;
-            margin-bottom: 16px;
-            overflow: hidden;
-        }
-        
-        .header-nav {
-            background: #ffffff;
-            color: #24292e;
-            padding: 16px 24px;
-            margin: 0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid #e1e4e8;
-        }
-        
-        .header-nav h1 {
-            color: #24292e;
-            margin: 0;
-            font-size: 1.5rem;
-            font-weight: 600;
-        }
-        
-        .nav-links {
-            display: flex;
-            gap: 8px;
-        }
-        
-        .nav-link {
-            color: #24292e;
-            text-decoration: none;
-            padding: 8px 16px;
-            border: 1px solid #e1e4e8;
-            border-radius: 6px;
-            font-weight: 500;
-            font-size: 14px;
-            background: #ffffff;
-        }
-        
-        .nav-link:hover {
-            background: #f6f8fa;
-            text-decoration: none;
-        }
-        
-        .nav-link.active {
-            background: #0366d6;
-            color: #ffffff;
-            border-color: #0366d6;
-        }
-        
-        .main-content {
-            padding: 24px;
-        }
-        
-        .filters {
-            background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
-            padding: 30px;
-            border-radius: 16px;
-            margin-bottom: 40px;
-            border: 1px solid #e2e8f0;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        }
-        
-        .filter-group {
-            display: inline-block;
-            margin-right: 25px;
-            margin-bottom: 15px;
-        }
-        
-        .filter-group label {
-            display: block;
-            margin-bottom: 4px;
-            font-weight: 500;
-            color: #24292e;
-            font-size: 14px;
-        }
-        
-        .filter-group input, .filter-group select {
-            padding: 8px 12px;
-            border: 1px solid #e1e4e8;
-            border-radius: 6px;
-            font-size: 14px;
-            background: #ffffff;
-            min-width: 160px;
-        }
-        
-        .filter-group input:focus, .filter-group select:focus {
-            outline: none;
-            border-color: #0366d6;
-            box-shadow: 0 0 0 3px rgba(3, 102, 214, 0.1);
-        }
-        
-        .btn {
-            background: #ffffff;
-            color: #24292e;
-            padding: 8px 16px;
-            border: 1px solid #e1e4e8;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 500;
-        }
-        
-        .btn:hover {
-            background: #f6f8fa;
-        }
-        
-        .btn:active {
-            background: #edeff2;
-        }
-        
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 16px;
-            margin-bottom: 24px;
-        }
-        
-        .stat-card {
-            background: #ffffff;
-            padding: 16px;
-            border-radius: 6px;
-            border: 1px solid #e1e4e8;
-            text-align: left;
-        }
-        
-        .stat-card:hover {
-            background: #f6f8fa;
-        }
-        
-        .stat-number {
-            font-size: 1.75rem;
-            font-weight: 600;
-            color: #24292e;
-            margin-bottom: 4px;
-        }
-        
-        .stat-label {
-            color: #586069;
-            font-weight: 400;
-            font-size: 14px;
-        }
-        
-        .growth-indicator {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            margin-top: 8px;
-        }
-        
-        .growth-positive {
-            background: rgba(72, 187, 120, 0.1);
-            color: #38a169;
-        }
-        
-        .growth-negative {
-            background: rgba(245, 101, 101, 0.1);
-            color: #e53e3e;
-        }
-        
-        .chart-container {
-            background: #ffffff;
-            padding: 24px;
-            border-radius: 6px;
-            border: 1px solid #e1e4e8;
-            margin-bottom: 24px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
-        
-        .chart-container h3 {
-            color: #24292e;
-            font-size: 1.25rem;
-            font-weight: 600;
-            margin-bottom: 16px;
-            text-align: left;
-        }
-        
-        .data-table {
-            width: 100%;
-            border-collapse: separate;
-            border-spacing: 0;
-            margin-top: 16px;
-            background: #ffffff;
-            border-radius: 6px;
-            overflow: hidden;
-            border: 1px solid #e1e4e8;
-        }
-        
-        .data-table th, .data-table td {
-            padding: 12px 16px;
-            text-align: left;
-            border-bottom: 1px solid #e1e4e8;
-        }
-        
-        .data-table th {
-            background: #f6f8fa;
-            font-weight: 600;
-            color: #24292e;
-            font-size: 14px;
-        }
-        
-        .data-table tr:hover {
-            background: #f6f8fa;
-        }
-        
-        .data-table tr:last-child td {
-            border-bottom: none;
-        }
-        
-        .pagination {
-            margin-top: 30px;
-            text-align: center;
-        }
-        
-        .pagination a {
-            display: inline-block;
-            padding: 8px 12px;
-            text-decoration: none;
-            color: #0366d6;
-            border: 1px solid #e1e4e8;
-            margin: 0 2px;
-            border-radius: 6px;
-            font-weight: 500;
-            font-size: 14px;
-        }
-        
-        .pagination a:hover {
-            background: #f6f8fa;
-            text-decoration: none;
-        }
-        
-        .pagination .active {
-            background: #0366d6;
-            color: white;
-            border-color: #0366d6;
-        }
-        
-        /* ページネーションのSVGアイコンサイズを強制的に小さく */
-        .pagination svg {
-            width: 12px !important;
-            height: 12px !important;
-        }
-        
-        .no-data-message {
-            text-align: center;
-            padding: 60px 40px;
-            color: #718096;
-        }
-        
-        .no-data-message h4 {
-            margin-bottom: 15px;
-            color: #4a5568;
-            font-size: 1.3rem;
-            font-weight: 600;
-        }
-        
-        .no-data-message p {
-            margin-bottom: 8px;
-            line-height: 1.6;
-        }
-        
-        @media (max-width: 768px) {
-            .container {
-                margin: 10px;
-                border-radius: 15px;
-            }
+@extends('layouts.admin')
+
+@section('title', 'フォロワー統計')
+
+@section('content')
+<div class="px-4 sm:px-0">
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900">フォロワー統計</h1>
+        <p class="mt-2 text-gray-600">GitHubフォロワー数の推移と統計情報</p>
+    </div>
+
+    <!-- フィルター -->
+    <div class="bg-white shadow rounded-lg mb-8">
+        <div class="px-4 py-5 sm:p-6">
+            <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">フィルター</h3>
+            <form method="GET" action="{{ route('github.followers') }}" id="filterForm" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                    <label for="username" class="block text-sm font-medium text-gray-700 mb-2">ユーザー名</label>
+                    <select name="username" id="username" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                        <option value="">すべて</option>
+                        @foreach($usernames as $username)
+                            <option value="{{ $username }}" {{ request('username') == $username ? 'selected' : '' }}>
+                                {{ $username }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+                
+                <div>
+                    <label for="start_date" class="block text-sm font-medium text-gray-700 mb-2">開始日</label>
+                    <input type="date" name="start_date" id="start_date" value="{{ request('start_date') }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                </div>
+                
+                <div>
+                    <label for="end_date" class="block text-sm font-medium text-gray-700 mb-2">終了日</label>
+                    <input type="date" name="end_date" id="end_date" value="{{ request('end_date') }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                </div>
+                
+                <div class="flex items-end space-x-2">
+                    <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        フィルター適用
+                    </button>
+                    <button type="button" onclick="resetFilters()" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        リセット
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
             
-            .header-nav {
-                padding: 20px;
-                flex-direction: column;
-                gap: 20px;
-            }
-            
-            .header-nav h1 {
-                font-size: 2rem;
-            }
-            
-            .main-content {
-                padding: 20px;
-            }
-            
-            .filter-group {
-                display: block;
-                margin-right: 0;
-                margin-bottom: 20px;
-            }
-            
-            .filter-group input, .filter-group select {
-                min-width: 100%;
-            }
-            
-            .stats-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header-nav">
-            <h1>GitHubフォロワー統計システム</h1>
-            <div class="nav-links">
-                @auth
-                    <a href="{{ route('admin.dashboard') }}" class="nav-link">管理画面</a>
-                @endauth
+    <!-- 統計情報 -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <svg class="h-6 w-6 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">最大フォロワー数</dt>
+                            <dd class="text-lg font-medium text-gray-900">{{ $stats && $stats->max_followers ? number_format($stats->max_followers) : '-' }}</dd>
+                            @if($growthRate !== null)
+                                <dd class="text-sm {{ $growthRate >= 0 ? 'text-green-600' : 'text-red-600' }}">
+                                    {{ $growthRate >= 0 ? '+' : '' }}{{ number_format($growthRate, 1) }}% (30日)
+                                </dd>
+                            @endif
+                        </dl>
+                    </div>
+                </div>
             </div>
         </div>
-        
-        <div class="main-content">
-            <!-- フィルター -->
-            <div class="filters">
-                <form method="GET" action="{{ route('github.followers') }}" id="filterForm">
-                    <div class="filter-group">
-                        <label for="username">ユーザー名:</label>
-                        <select name="username" id="username">
-                            <option value="">すべて</option>
-                            @foreach($usernames as $username)
-                                <option value="{{ $username }}" {{ request('username') == $username ? 'selected' : '' }}>
-                                    {{ $username }}
-                                </option>
-                            @endforeach
-                        </select>
+
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <svg class="h-6 w-6 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                        </svg>
                     </div>
-                    
-                    <div class="filter-group">
-                        <label for="start_date">開始日:</label>
-                        <input type="date" name="start_date" id="start_date" value="{{ request('start_date') }}">
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">平均フォロワー数</dt>
+                            <dd class="text-lg font-medium text-gray-900">{{ $stats && $stats->avg_followers ? number_format($stats->avg_followers) : '-' }}</dd>
+                        </dl>
                     </div>
-                    
-                    <div class="filter-group">
-                        <label for="end_date">終了日:</label>
-                        <input type="date" name="end_date" id="end_date" value="{{ request('end_date') }}">
-                    </div>
-                    
-                    <button type="submit" class="btn">フィルター適用</button>
-                    <button type="button" class="btn" onclick="resetFilters()">リセット</button>
-                </form>
-            </div>
-            
-            <!-- 統計情報 -->
-            <div class="stats-grid" id="statsGrid">
-                <div class="stat-card">
-                    <div class="stat-number" id="maxFollowers">
-                        {{ $stats && $stats->max_followers ? number_format($stats->max_followers) : '-' }}
-                    </div>
-                    <div class="stat-label">最大フォロワー数</div>
-                    @if($growthRate !== null)
-                        <div class="growth-indicator {{ $growthRate >= 0 ? 'growth-positive' : 'growth-negative' }}">
-                            {{ $growthRate >= 0 ? '+' : '' }}{{ number_format($growthRate, 1) }}% (30日)
-                        </div>
-                    @endif
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number" id="avgFollowers">
-                        {{ $stats && $stats->avg_followers ? number_format($stats->avg_followers) : '-' }}
-                    </div>
-                    <div class="stat-label">平均フォロワー数</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number" id="maxFollowing">
-                        {{ $stats && $stats->max_following ? number_format($stats->max_following) : '-' }}
-                    </div>
-                    <div class="stat-label">最大フォロー数</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number" id="maxRepos">
-                        {{ $stats && $stats->max_repos ? number_format($stats->max_repos) : '-' }}
-                    </div>
-                    <div class="stat-label">最大リポジトリ数</div>
                 </div>
             </div>
-            
-            <!-- チャート -->
-            <div class="chart-container">
-                <h3>フォロワー数推移
-                    @if(request('start_date') || request('end_date'))
-                        <small style="font-size: 0.8em; color: #666;">
-                            ({{ request('start_date') ?: '開始日なし' }} ～ {{ request('end_date') ?: '終了日なし' }})
-                        </small>
-                    @endif
-                </h3>
-                @if($chartData && count($chartData) > 0)
-                    <canvas id="followersChart" width="400" height="200"></canvas>
-                @else
-                    <div class="no-data-message">
-                        <h4>データが見つかりません</h4>
-                        <p>選択された条件に一致するデータがありません。</p>
-                        <p>フィルター条件を変更するか、日付範囲を調整してください。</p>
+        </div>
+
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <svg class="h-6 w-6 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                        </svg>
                     </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">最大フォロー数</dt>
+                            <dd class="text-lg font-medium text-gray-900">{{ $stats && $stats->max_following ? number_format($stats->max_following) : '-' }}</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <svg class="h-6 w-6 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14-7l2 2-2 2m-2-2h2m-2 0h-2m2 0v2M7 7l-2 2 2 2m2-2H7m2 0H5m2 0V5"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">最大リポジトリ数</dt>
+                            <dd class="text-lg font-medium text-gray-900">{{ $stats && $stats->max_repos ? number_format($stats->max_repos) : '-' }}</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+            
+    <!-- チャート -->
+    <div class="bg-white shadow rounded-lg mb-8">
+        <div class="px-4 py-5 sm:p-6">
+            <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">
+                フォロワー数推移
+                @if(request('start_date') || request('end_date'))
+                    <span class="text-sm font-normal text-gray-500">
+                        ({{ request('start_date') ?: '開始日なし' }} ～ {{ request('end_date') ?: '終了日なし' }})
+                    </span>
                 @endif
-            </div>
-            
-            <!-- データテーブル -->
-            <h3>フォロワー統計データ</h3>
-            @if($followers->count() > 0)
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th>ユーザー名</th>
-                            <th>日付</th>
-                            <th>フォロワー数</th>
-                            <th>フォロー数</th>
-                            <th>リポジトリ数</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach($followers as $follower)
-                        <tr>
-                            <td>{{ $follower->username }}</td>
-                            <td>{{ $follower->date->format('Y-m-d') }}</td>
-                            <td>{{ number_format($follower->followers_count) }}</td>
-                            <td>{{ number_format($follower->following_count) }}</td>
-                            <td>{{ number_format($follower->public_repos) }}</td>
-                        </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-                
-                <!-- ページネーション -->
-                <div class="pagination">
-                    {{ $followers->links() }}
-                </div>
+            </h3>
+            @if($chartData && count($chartData) > 0)
+                <canvas id="followersChart" width="400" height="200"></canvas>
             @else
-                <div class="no-data-message">
-                    <h4>データが見つかりません</h4>
-                    <p>選択された条件に一致するデータがありません。</p>
-                    <p>フィルター条件を変更するか、日付範囲を調整してください。</p>
+                <div class="text-center py-12">
+                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                    </svg>
+                    <h3 class="mt-2 text-sm font-medium text-gray-900">データが見つかりません</h3>
+                    <p class="mt-1 text-sm text-gray-500">選択された条件に一致するデータがありません。</p>
                 </div>
             @endif
         </div>
     </div>
-
-    @if($chartData && count($chartData) > 0)
-    <script>
-        // チャートデータが存在する場合のみChart.jsを初期化
-        document.addEventListener('DOMContentLoaded', function() {
-            const ctx = document.getElementById('followersChart');
-            if (ctx) {
-                const chartData = JSON.parse('@json($chartData)');
+            
+    <!-- データテーブル -->
+    <div class="bg-white shadow rounded-lg">
+        <div class="px-4 py-5 sm:p-6">
+            <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">フォロワー統計データ</h3>
+            @if($followers->count() > 0)
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ユーザー名</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">日付</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">フォロワー数</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">フォロー数</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">リポジトリ数</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            @foreach($followers as $follower)
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ $follower->username }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $follower->date->format('Y-m-d') }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ number_format($follower->followers_count) }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ number_format($follower->following_count) }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ number_format($follower->public_repos) }}</td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
                 
-                new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: chartData.map(function(item) { return item.date; }),
-                        datasets: [
-                            {
-                                label: 'フォロワー数',
-                                data: chartData.map(function(item) { return item.followers_count; }),
-                                borderColor: '#48bb78',
-                                backgroundColor: 'rgba(72, 187, 120, 0.1)',
-                                tension: 0.1
-                            },
-                            {
-                                label: 'フォロー数',
-                                data: chartData.map(function(item) { return item.following_count; }),
-                                borderColor: '#667eea',
-                                backgroundColor: 'rgba(102, 126, 234, 0.1)',
-                                tension: 0.1
-                            },
-                            {
-                                label: 'リポジトリ数',
-                                data: chartData.map(function(item) { return item.public_repos; }),
-                                borderColor: '#ed8936',
-                                backgroundColor: 'rgba(237, 137, 54, 0.1)',
-                                tension: 0.1
-                            }
-                        ]
-                    },
-                    options: {
-                        responsive: true,
-                        scales: {
-                            y: {
-                                beginAtZero: true
-                            }
+                <!-- ページネーション -->
+                <div class="mt-6">
+                    {{ $followers->links() }}
+                </div>
+            @else
+                <div class="text-center py-12">
+                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                    </svg>
+                    <h3 class="mt-2 text-sm font-medium text-gray-900">データが見つかりません</h3>
+                    <p class="mt-1 text-sm text-gray-500">選択された条件に一致するデータがありません。</p>
+                </div>
+            @endif
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+@if($chartData && count($chartData) > 0)
+<script>
+    // チャートデータが存在する場合のみChart.jsを初期化
+    document.addEventListener('DOMContentLoaded', function() {
+        const ctx = document.getElementById('followersChart');
+        if (ctx) {
+            const chartData = JSON.parse('@json($chartData)');
+            
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: chartData.map(function(item) { return item.date; }),
+                    datasets: [
+                        {
+                            label: 'フォロワー数',
+                            data: chartData.map(function(item) { return item.followers_count; }),
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            tension: 0.1
                         },
-                        plugins: {
-                            legend: {
-                                position: 'top'
-                            }
+                        {
+                            label: 'フォロー数',
+                            data: chartData.map(function(item) { return item.following_count; }),
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            tension: 0.1
+                        },
+                        {
+                            label: 'リポジトリ数',
+                            data: chartData.map(function(item) { return item.public_repos; }),
+                            borderColor: '#f59e0b',
+                            backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                            tension: 0.1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top'
                         }
                     }
-                });
-            }
-        });
-    </script>
-    @endif
-    
-    <script>
-        // フィルターリセット
-        function resetFilters() {
-            document.getElementById('username').value = '';
-            document.getElementById('start_date').value = '';
-            document.getElementById('end_date').value = '';
-            document.getElementById('filterForm').submit();
+                }
+            });
         }
-    </script>
-</body>
-</html>
+    });
+</script>
+@endif
+
+<script>
+    // フィルターリセット
+    function resetFilters() {
+        document.getElementById('username').value = '';
+        document.getElementById('start_date').value = '';
+        document.getElementById('end_date').value = '';
+        document.getElementById('filterForm').submit();
+    }
+</script>
+@endsection

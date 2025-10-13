@@ -207,6 +207,7 @@ class FetchGitHubFollowers extends Command
                         'follower_bio' => $followerDetails['bio'],
                         'follower_public_repos' => $followerDetails['public_repos'],
                         'follower_followers' => $followerDetails['followers'],
+                        'follower_following' => $followerDetails['following'],
                         'is_active' => true
                     ]
                 );
@@ -271,7 +272,8 @@ class FetchGitHubFollowers extends Command
                 'avatar_url' => null,
                 'bio' => null,
                 'public_repos' => 0,
-                'followers' => 0
+                'followers' => 0,
+                'following' => 0
             ];
         }
 
@@ -282,7 +284,8 @@ class FetchGitHubFollowers extends Command
             'avatar_url' => $data['avatar_url'],
             'bio' => $data['bio'],
             'public_repos' => $data['public_repos'] ?? 0,
-            'followers' => $data['followers'] ?? 0
+            'followers' => $data['followers'] ?? 0,
+            'following' => $data['following'] ?? 0
         ];
     }
 }
