@@ -269,12 +269,17 @@ docker compose up -d
 # ログ確認
 docker compose logs -f
 
-# マイグレーション実行
-docker compose exec app php artisan migrate --force
-
 # ステータス確認
 docker compose ps
+
+# マイグレーション実行（初回のみ手動実行が必要）
+docker compose exec app php artisan migrate --force
+
+# 管理者アカウント作成（初回のみ手動実行が必要）
+docker compose exec app php artisan db:seed --class=AdminUserSeeder --force
 ```
+
+**注意**: 初回の手動デプロイではマイグレーションとシーダーを手動実行する必要がありますが、以降の自動デプロイでは自動的に実行されます。
 
 ### 6. Nginx Proxy Manager でドメイン設定
 
@@ -300,11 +305,14 @@ Nginx Proxy Managerの管理画面で：
 git push origin main
 ```
 
-GitHub Actionsが以下を実行：
+GitHub Actionsが以下を自動実行：
 1. Dockerイメージのビルド
 2. GitHub Container Registryへpush
 3. Self-hosted Runnerでデプロイスクリプト実行
-4. コンテナの再起動とマイグレーション
+4. コンテナの起動とヘルスチェック待機
+5. データベースマイグレーション実行
+6. AdminUserSeeder実行（管理者アカウント自動作成）
+7. キャッシュ最適化
 
 ### 手動デプロイ
 
@@ -490,6 +498,34 @@ docker compose logs app
 # 再起動
 docker compose restart app web
 ```
+
+### 7. マイグレーションが実行されない / テーブルが作成されない
+
+**症状**: デプロイログでは「マイグレーション成功」と表示されるが、実際にはテーブルが作成されていない。500エラーが発生する。
+
+**原因**: コンテナ起動直後にマイグレーションを実行すると、アプリケーションの準備が完了していない場合があります。
+
+**解決策**:
+```bash
+# データベースの状態を確認
+docker compose exec db mysql -u root -p${DB_ROOT_PASSWORD} -e "USE github_traffic_db; SHOW TABLES;"
+
+# テーブルが存在しない場合は手動でマイグレーション実行
+docker compose exec app php artisan migrate --force
+
+# AdminUserSeederも実行
+docker compose exec app php artisan db:seed --class=AdminUserSeeder --force
+
+# アプリケーションが正常に動作するか確認
+docker compose logs app
+```
+
+**予防策**: デプロイスクリプト（deploy.sh）では、以下の改善が実装されています：
+- コンテナのヘルスチェック状態を監視
+- データベース接続確認後にマイグレーション実行
+- エラー発生時の詳細ログ出力
+
+次回以降の自動デプロイでは、この問題は発生しません。
 
 ---
 
