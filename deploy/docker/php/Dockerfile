@@ -39,10 +39,8 @@ COPY deploy/docker/php/php-fpm.conf /usr/local/etc/php-fpm.d/zzz-www.conf
 RUN mkdir -p /var/run/php-fpm \
   && chown -R www-data:www-data /var/run/php-fpm
 
-# Laravel用キャッシュ（存在しない場合はスキップ）
-RUN php artisan config:cache || true \
-  && php artisan route:cache || true \
-  && php artisan view:cache || true
+# 既存のキャッシュを削除（実行時に再生成）
+RUN rm -rf bootstrap/cache/*.php
 
 # 権限設定
 RUN chown -R www-data:www-data /var/www/html
