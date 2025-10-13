@@ -23,6 +23,7 @@ class GitHubFollowerDetail extends Model
         'follower_bio',
         'follower_public_repos',
         'follower_followers',
+        'follower_following',
         'followed_at',
         'unfollowed_at',
         'is_active'
@@ -31,6 +32,7 @@ class GitHubFollowerDetail extends Model
     protected $casts = [
         'follower_public_repos' => 'integer',
         'follower_followers' => 'integer',
+        'follower_following' => 'integer',
         'followed_at' => 'datetime',
         'unfollowed_at' => 'datetime',
         'is_active' => 'boolean',
@@ -70,15 +72,6 @@ class GitHubFollowerDetail extends Model
                     ->orderBy('followed_at', 'desc');
     }
 
-    /**
-     * フォロワー数の多い順に取得
-     */
-    public function scopeInfluential($query, int $minFollowers = 100)
-    {
-        return $query->where('follower_followers', '>=', $minFollowers)
-                    ->active()
-                    ->orderBy('follower_followers', 'desc');
-    }
 
     /**
      * 特定の期間にフォローされたユーザー数を取得
@@ -121,15 +114,4 @@ class GitHubFollowerDetail extends Model
         ]);
     }
 
-    /**
-     * フォロワーの影響力スコアを計算
-     */
-    public function getInfluenceScoreAttribute(): float
-    {
-        $reposWeight = 0.3;
-        $followersWeight = 0.7;
-        
-        return ($this->follower_public_repos * $reposWeight) + 
-               ($this->follower_followers * $followersWeight);
-    }
 }

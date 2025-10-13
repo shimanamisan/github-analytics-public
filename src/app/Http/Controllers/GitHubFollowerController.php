@@ -50,7 +50,7 @@ class GitHubFollowerController extends Controller
         $startDate = $request->filled('start_date') ? $request->start_date : now()->subDays(30)->format('Y-m-d');
         $endDate = $request->filled('end_date') ? $request->end_date : now()->format('Y-m-d');
         
-        $chartQuery->dateRange($startDate, $endDate);
+        $chartQuery->whereBetween('date', [$startDate, $endDate]);
         
         $chartData = $chartQuery->orderBy('date', 'asc')
                               ->get(['date', 'followers_count', 'following_count', 'public_repos'])
@@ -139,11 +139,6 @@ class GitHubFollowerController extends Controller
                 break;
             case 'repos':
                 $query->orderBy('follower_public_repos', $sortOrder);
-                break;
-            case 'influence':
-                // 影響力スコアで並び替え（計算フィールド）
-                $query->selectRaw('*, (follower_public_repos * 0.3 + follower_followers * 0.7) as influence_score')
-                      ->orderBy('influence_score', $sortOrder);
                 break;
             default:
                 $query->orderBy('followed_at', $sortOrder);
@@ -245,25 +240,6 @@ class GitHubFollowerController extends Controller
         return response()->json($stats);
     }
 
-    /**
-     * 影響力のあるフォロワー（トップフォロワー）を取得
-     */
-    public function influential(Request $request): JsonResponse
-    {
-        $username = $request->get('username');
-        $limit = $request->get('limit', 10);
-        
-        $query = GitHubFollowerDetail::active()
-                                   ->influential(100);
-        
-        if ($username) {
-            $query->forUser($username);
-        }
-        
-        $influentialFollowers = $query->limit($limit)->get();
-        
-        return response()->json($influentialFollowers);
-    }
 
     /**
      * 最近のフォロワー増減を取得
