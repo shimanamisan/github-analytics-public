@@ -8,6 +8,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Contracts\Auth\CanResetPassword;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class User extends Authenticatable
 {
@@ -98,5 +99,13 @@ class User extends Authenticatable
     public function scopeForAuthentication($query)
     {
         return $query->where('is_active', true);
+    }
+
+    /**
+     * ユーザーが登録したリポジトリとの関連
+     */
+    public function gitHubRepositories(): HasMany
+    {
+        return $this->hasMany(GitHubRepository::class);
     }
 }

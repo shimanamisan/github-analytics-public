@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class GitHubRepository extends Model
 {
@@ -16,6 +17,7 @@ class GitHubRepository extends Model
     protected $table = 'github_repositories';
 
     protected $fillable = [
+        'user_id',
         'owner',
         'repo',
         'name',
@@ -37,11 +39,27 @@ class GitHubRepository extends Model
     }
 
     /**
+     * ユーザーとの関連
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    /**
      * アクティブなリポジトリのみ取得
      */
     public function scopeActive($query)
     {
         return $query->where('is_active', true);
+    }
+
+    /**
+     * 特定のユーザーのリポジトリのみ取得
+     */
+    public function scopeForUser($query, $userId)
+    {
+        return $query->where('user_id', $userId);
     }
 
     /**

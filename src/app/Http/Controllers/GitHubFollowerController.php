@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\View\View;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 
 class GitHubFollowerController extends Controller
 {
@@ -16,10 +17,21 @@ class GitHubFollowerController extends Controller
      */
     public function index(Request $request): View
     {
+        $user = Auth::user();
+        
         $query = GitHubFollower::query();
         
-        // ユーザーでフィルタリング
-        if ($request->filled('username')) {
+        // ユーザー制限を適用
+        if ($user && !$user->isAdmin()) {
+            // 一般ユーザーは自分のデータのみアクセス可能
+            $query->forUser($user->name);
+        } else if (!$user) {
+            // 認証されていないユーザーは何も表示しない
+            $query->whereRaw('1 = 0');
+        }
+        
+        // ユーザーでフィルタリング（管理者のみ）
+        if ($request->filled('username') && $user && $user->isAdmin()) {
             $query->forUser($request->username);
         }
         
@@ -36,13 +48,26 @@ class GitHubFollowerController extends Controller
         $followers = $query->orderBy('date', 'desc')->paginate(30);
         
         // ユーザー一覧を取得（フィルター用）
-        $usernames = GitHubFollower::distinct()->pluck('username');
+        if ($user && $user->isAdmin()) {
+            $usernames = GitHubFollower::distinct()->pluck('username');
+        } else if ($user) {
+            $usernames = collect([$user->name]);
+        } else {
+            $usernames = collect();
+        }
         
         // チャートデータを準備
         $chartQuery = GitHubFollower::query();
         
+        // ユーザー制限を適用（チャート用）
+        if ($user && !$user->isAdmin()) {
+            $chartQuery->forUser($user->name);
+        } else if (!$user) {
+            $chartQuery->whereRaw('1 = 0');
+        }
+        
         // フィルターを適用（チャート用）
-        if ($request->filled('username')) {
+        if ($request->filled('username') && $user && $user->isAdmin()) {
             $chartQuery->forUser($request->username);
         }
         
@@ -66,8 +91,15 @@ class GitHubFollowerController extends Controller
         // 統計情報を準備
         $statsQuery = GitHubFollower::query();
         
+        // ユーザー制限を適用（統計用）
+        if ($user && !$user->isAdmin()) {
+            $statsQuery->forUser($user->name);
+        } else if (!$user) {
+            $statsQuery->whereRaw('1 = 0');
+        }
+        
         // フィルターを適用（統計用）
-        if ($request->filled('username')) {
+        if ($request->filled('username') && $user && $user->isAdmin()) {
             $statsQuery->forUser($request->username);
         }
         
@@ -92,7 +124,12 @@ class GitHubFollowerController extends Controller
         
         // 最新のフォロワー成長率を計算
         $growthRate = null;
-        if ($request->filled('username')) {
+        if ($user && !$user->isAdmin()) {
+            $latestRecord = GitHubFollower::forUser($user->name)->latest('date')->first();
+            if ($latestRecord) {
+                $growthRate = $latestRecord->getGrowthRate(30);
+            }
+        } else if ($request->filled('username') && $user && $user->isAdmin()) {
             $latestRecord = GitHubFollower::forUser($request->username)->latest('date')->first();
             if ($latestRecord) {
                 $growthRate = $latestRecord->getGrowthRate(30);
@@ -113,10 +150,19 @@ class GitHubFollowerController extends Controller
      */
     public function details(Request $request): View
     {
+        $user = Auth::user();
+        
         $query = GitHubFollowerDetail::with('githubFollower');
         
-        // ユーザーでフィルタリング
-        if ($request->filled('username')) {
+        // ユーザー制限を適用
+        if ($user && !$user->isAdmin()) {
+            $query->forUser($user->name);
+        } else if (!$user) {
+            $query->whereRaw('1 = 0');
+        }
+        
+        // ユーザーでフィルタリング（管理者のみ）
+        if ($request->filled('username') && $user && $user->isAdmin()) {
             $query->forUser($request->username);
         }
         
@@ -148,14 +194,27 @@ class GitHubFollowerController extends Controller
         $followerDetails = $query->paginate(20);
         
         // ユーザー一覧を取得（フィルター用）
-        $usernames = GitHubFollowerDetail::distinct()->pluck('target_username');
+        if ($user && $user->isAdmin()) {
+            $usernames = GitHubFollowerDetail::distinct()->pluck('target_username');
+        } else if ($user) {
+            $usernames = collect([$user->name]);
+        } else {
+            $usernames = collect();
+        }
         
         // 統計情報
-        $detailStats = GitHubFollowerDetail::active()
-            ->when($request->filled('username'), function($q) use ($request) {
-                return $q->forUser($request->username);
-            })
-            ->selectRaw('
+        $detailStats = GitHubFollowerDetail::active();
+        
+        // ユーザー制限を適用
+        if ($user && !$user->isAdmin()) {
+            $detailStats->forUser($user->name);
+        } else if (!$user) {
+            $detailStats->whereRaw('1 = 0');
+        } else if ($request->filled('username')) {
+            $detailStats->forUser($request->username);
+        }
+        
+        $detailStats = $detailStats->selectRaw('
                 COUNT(*) as total_followers,
                 AVG(follower_followers) as avg_follower_count,
                 AVG(follower_public_repos) as avg_repos,
@@ -166,7 +225,14 @@ class GitHubFollowerController extends Controller
 
         // フォロー解除統計を追加
         $unfollowStats = null;
-        if ($request->filled('username')) {
+        if ($user && !$user->isAdmin()) {
+            $unfollowStats = GitHubFollowerDetail::forUser($user->name)
+                ->selectRaw('
+                    COUNT(CASE WHEN unfollowed_at >= ? THEN 1 END) as recent_unfollowed,
+                    COUNT(CASE WHEN is_active = false THEN 1 END) as total_unfollowed
+                ', [now()->subDays(7)])
+                ->first();
+        } else if ($request->filled('username') && $user && $user->isAdmin()) {
             $unfollowStats = GitHubFollowerDetail::forUser($request->username)
                 ->selectRaw('
                     COUNT(CASE WHEN unfollowed_at >= ? THEN 1 END) as recent_unfollowed,
@@ -188,10 +254,19 @@ class GitHubFollowerController extends Controller
      */
     public function chart(Request $request): JsonResponse
     {
+        $user = Auth::user();
+        
         $query = GitHubFollower::query();
         
-        // ユーザーでフィルタリング
-        if ($request->filled('username')) {
+        // ユーザー制限を適用
+        if ($user && !$user->isAdmin()) {
+            $query->forUser($user->name);
+        } else if (!$user) {
+            $query->whereRaw('1 = 0');
+        }
+        
+        // ユーザーでフィルタリング（管理者のみ）
+        if ($request->filled('username') && $user && $user->isAdmin()) {
             $query->forUser($request->username);
         }
         
@@ -220,9 +295,16 @@ class GitHubFollowerController extends Controller
      */
     public function stats(Request $request): JsonResponse
     {
+        $user = Auth::user();
+        
         $query = GitHubFollower::query();
         
-        if ($request->filled('username')) {
+        // ユーザー制限を適用
+        if ($user && !$user->isAdmin()) {
+            $query->forUser($user->name);
+        } else if (!$user) {
+            $query->whereRaw('1 = 0');
+        } else if ($request->filled('username')) {
             $query->forUser($request->username);
         }
         

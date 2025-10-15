@@ -53,7 +53,16 @@ class RepositoryManager extends Component
 
     public function render()
     {
-        $repositories = GitHubRepository::query()
+        $user = auth()->user();
+        
+        // 管理者の場合はすべてのリポジトリを表示、一般ユーザーの場合は自分のリポジトリのみ
+        $query = GitHubRepository::query();
+        
+        if (!$user->isAdmin()) {
+            $query->forUser($user->id);
+        }
+        
+        $repositories = $query
             ->when($this->search, function ($query) {
                 $query->where(function ($q) {
                     $q->where('owner', 'like', '%' . $this->search . '%')
@@ -73,6 +82,13 @@ class RepositoryManager extends Component
     public function openEditModal($repositoryId)
     {
         $repository = GitHubRepository::findOrFail($repositoryId);
+        
+        // 一般ユーザーの場合は自分のリポジトリかチェック
+        $user = auth()->user();
+        if (!$user->isAdmin() && $repository->user_id !== $user->id) {
+            session()->flash('error', 'このリポジトリを編集する権限がありません。');
+            return;
+        }
         
         $this->editMode = true;
         $this->repositoryId = $repository->id;
@@ -142,6 +158,14 @@ class RepositoryManager extends Component
     {
         try {
             $repository = GitHubRepository::findOrFail($repositoryId);
+            
+            // 一般ユーザーの場合は自分のリポジトリかチェック
+            $user = auth()->user();
+            if (!$user->isAdmin() && $repository->user_id !== $user->id) {
+                session()->flash('error', 'このリポジトリを削除する権限がありません。');
+                return;
+            }
+            
             $repository->delete();
             session()->flash('message', 'リポジトリが正常に削除されました。');
         } catch (\Exception $e) {
@@ -153,6 +177,14 @@ class RepositoryManager extends Component
     {
         try {
             $repository = GitHubRepository::findOrFail($repositoryId);
+            
+            // 一般ユーザーの場合は自分のリポジトリかチェック
+            $user = auth()->user();
+            if (!$user->isAdmin() && $repository->user_id !== $user->id) {
+                session()->flash('error', 'このリポジトリのステータスを変更する権限がありません。');
+                return;
+            }
+            
             $repository->update(['is_active' => !$repository->is_active]);
             
             $status = $repository->is_active ? 'アクティブ' : '非アクティブ';

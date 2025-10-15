@@ -26,21 +26,31 @@ class AdminUserSeeder extends Seeder
             ]
         );
 
-        // 実際の管理者アカウントを作成
-        User::updateOrCreate(
-            ['email' => 'mikan.sup.all@gmail.com'],
-            [
-                'name' => 'システム管理者',
-                'email' => 'mikan.sup.all@gmail.com',
-                'password' => Hash::make('UsaosAn1987'),
-                'email_verified_at' => now(),
-                'is_admin' => true,
-                'is_active' => true,
-            ]
-        );
+        // .envファイルから管理者情報を取得
+        $adminEmail = env('ADMIN_EMAIL');
+        $adminPassword = env('ADMIN_PASSWORD');
+        $adminName = env('ADMIN_NAME', 'システム管理者');
 
-        $this->command->info('ユーザーアカウントを作成しました。');
+        // 管理者情報が設定されている場合のみ作成
+        if (!empty($adminEmail) && !empty($adminPassword)) {
+            User::updateOrCreate(
+                ['email' => $adminEmail],
+                [
+                    'name' => $adminName,
+                    'email' => $adminEmail,
+                    'password' => Hash::make($adminPassword),
+                    'email_verified_at' => now(),
+                    'is_admin' => true,
+                    'is_active' => true,
+                ]
+            );
+
+            $this->command->info("管理者アカウントを作成しました: {$adminEmail}");
+        } else {
+            $this->command->warn('管理者情報が.envファイルに設定されていません。');
+            $this->command->warn('ADMIN_EMAIL と ADMIN_PASSWORD を設定してください。');
+        }
+
         $this->command->info('一般ユーザー: user@example.com / password');
-        $this->command->info('管理者: mikan.sup.all@gmail.com / UsaosAn1987');
     }
 }
