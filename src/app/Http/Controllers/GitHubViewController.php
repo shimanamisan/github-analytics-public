@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\GitHubView;
+use App\Models\GitHubRepository;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\View\View;
+use Illuminate\Support\Facades\Auth;
 
 class GitHubViewController extends Controller
 {
@@ -14,6 +16,8 @@ class GitHubViewController extends Controller
      */
     public function index(Request $request): View
     {
+        $user = Auth::user();
+        
         // デバッグ用ログ
         \Log::info('GitHub views request parameters', [
             'project' => $request->get('project'),
@@ -28,9 +32,30 @@ class GitHubViewController extends Controller
         
         $query = GitHubView::with('repository');
         
+        // ユーザーが登録したリポジトリのみに制限（管理者以外）
+        if ($user && !$user->isAdmin()) {
+            $userRepositoryIds = GitHubRepository::forUser($user->id)->pluck('id');
+            $query->whereIn('repository_id', $userRepositoryIds);
+            // repository_idがnullのデータは除外
+            $query->whereNotNull('repository_id');
+        } else if (!$user) {
+            // 認証されていないユーザーは何も表示しない
+            $query->whereRaw('1 = 0');
+        }
+        
         // リポジトリでフィルタリング
         if ($request->filled('repository_id')) {
-            $query->forRepository($request->repository_id);
+            $repositoryId = $request->repository_id;
+            
+            // 一般ユーザーの場合は、自分のリポジトリかチェック
+            if ($user && !$user->isAdmin()) {
+                $userRepositoryIds = GitHubRepository::forUser($user->id)->pluck('id');
+                if (!$userRepositoryIds->contains($repositoryId)) {
+                    abort(403, 'このリポジトリにアクセスする権限がありません。');
+                }
+            }
+            
+            $query->forRepository($repositoryId);
         }
         
         // プロジェクトでフィルタリング（後方互換性のため）
@@ -87,13 +112,37 @@ class GitHubViewController extends Controller
         }
         
         // リポジトリ一覧を取得（フィルター用）
-        $repositories = \App\Models\GitHubRepository::orderBy('name')->get();
+        if ($user && $user->isAdmin()) {
+            $repositories = GitHubRepository::orderBy('name')->get();
+        } else {
+            $repositories = $user ? GitHubRepository::forUser($user->id)->orderBy('name')->get() : collect();
+        }
         
         // プロジェクト一覧を取得（後方互換性のため）
-        $projects = GitHubView::distinct()->pluck('project');
+        if ($user && $user->isAdmin()) {
+            $projects = GitHubView::distinct()->pluck('project');
+        } else {
+            if ($user) {
+                $userRepositoryIds = GitHubRepository::forUser($user->id)->pluck('id');
+                $projects = GitHubView::whereIn('repository_id', $userRepositoryIds)->distinct()->pluck('project');
+            } else {
+                $projects = collect();
+            }
+        }
         
         // サーバーサイドでチャートデータを準備
         $chartQuery = GitHubView::with('repository');
+        
+        // ユーザーが登録したリポジトリのみに制限（管理者以外）
+        if ($user && !$user->isAdmin()) {
+            $userRepositoryIds = GitHubRepository::forUser($user->id)->pluck('id');
+            $chartQuery->whereIn('repository_id', $userRepositoryIds);
+            // repository_idがnullのデータは除外
+            $chartQuery->whereNotNull('repository_id');
+        } else if (!$user) {
+            // 認証されていないユーザーは何も表示しない
+            $chartQuery->whereRaw('1 = 0');
+        }
         
         // フィルターを適用（チャート用）
         if ($request->filled('repository_id')) {
@@ -166,6 +215,17 @@ class GitHubViewController extends Controller
         // サーバーサイドで統計情報を準備
         $statsQuery = GitHubView::query();
         
+        // ユーザーが登録したリポジトリのみに制限（管理者以外）
+        if ($user && !$user->isAdmin()) {
+            $userRepositoryIds = GitHubRepository::forUser($user->id)->pluck('id');
+            $statsQuery->whereIn('repository_id', $userRepositoryIds);
+            // repository_idがnullのデータは除外
+            $statsQuery->whereNotNull('repository_id');
+        } else if (!$user) {
+            // 認証されていないユーザーは何も表示しない
+            $statsQuery->whereRaw('1 = 0');
+        }
+        
         // フィルターを適用（統計用）
         if ($request->filled('repository_id')) {
             $statsQuery->forRepository($request->repository_id);
@@ -217,7 +277,14 @@ class GitHubViewController extends Controller
      */
     public function chart(Request $request): JsonResponse
     {
+        $user = Auth::user();
         $query = GitHubView::with('repository');
+        
+        // ユーザーが登録したリポジトリのみに制限（管理者以外）
+        if (!$user->isAdmin()) {
+            $userRepositoryIds = GitHubRepository::forUser($user->id)->pluck('id');
+            $query->whereIn('repository_id', $userRepositoryIds);
+        }
         
         // デバッグ用ログ
         \Log::info('Chart request parameters', [
@@ -289,7 +356,16 @@ class GitHubViewController extends Controller
      */
     public function stats(): JsonResponse
     {
-        $stats = GitHubView::selectRaw('
+        $user = Auth::user();
+        $query = GitHubView::query();
+        
+        // ユーザーが登録したリポジトリのみに制限（管理者以外）
+        if (!$user->isAdmin()) {
+            $userRepositoryIds = GitHubRepository::forUser($user->id)->pluck('id');
+            $query->whereIn('repository_id', $userRepositoryIds);
+        }
+        
+        $stats = $query->selectRaw('
             COUNT(*) as total_records,
             SUM(count) as total_views,
             SUM(uniques) as total_uniques,
@@ -307,7 +383,16 @@ class GitHubViewController extends Controller
      */
     public function projectStats(): JsonResponse
     {
-        $projectStats = GitHubView::selectRaw('
+        $user = Auth::user();
+        $query = GitHubView::query();
+        
+        // ユーザーが登録したリポジトリのみに制限（管理者以外）
+        if (!$user->isAdmin()) {
+            $userRepositoryIds = GitHubRepository::forUser($user->id)->pluck('id');
+            $query->whereIn('repository_id', $userRepositoryIds);
+        }
+        
+        $projectStats = $query->selectRaw('
             project,
             COUNT(*) as record_count,
             SUM(count) as total_views,

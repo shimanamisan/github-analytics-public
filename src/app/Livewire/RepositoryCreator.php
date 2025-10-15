@@ -45,6 +45,7 @@ class RepositoryCreator extends Component
 
         try {
             $repository = GitHubRepository::create([
+                'user_id' => auth()->id(),
                 'owner' => $this->owner,
                 'repo' => $this->repo,
                 'name' => $this->name,

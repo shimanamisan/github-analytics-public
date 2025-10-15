@@ -14,17 +14,21 @@
         <div class="px-4 py-5 sm:p-6">
             <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">フィルター</h3>
             <form method="GET" action="{{ route('github.followers') }}" id="filterForm" class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div>
-                    <label for="username" class="block text-sm font-medium text-gray-700 mb-2">ユーザー名</label>
-                    <select name="username" id="username" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-                        <option value="">すべて</option>
-                        @foreach($usernames as $username)
-                            <option value="{{ $username }}" {{ request('username') == $username ? 'selected' : '' }}>
-                                {{ $username }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
+                @auth
+                    @if(auth()->user()->isAdmin())
+                    <div>
+                        <label for="username" class="block text-sm font-medium text-gray-700 mb-2">ユーザー名</label>
+                        <select name="username" id="username" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                            <option value="">すべて</option>
+                            @foreach($usernames as $username)
+                                <option value="{{ $username }}" {{ request('username') == $username ? 'selected' : '' }}>
+                                    {{ $username }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    @endif
+                @endauth
                 
                 <div>
                     <label for="start_date" class="block text-sm font-medium text-gray-700 mb-2">開始日</label>
