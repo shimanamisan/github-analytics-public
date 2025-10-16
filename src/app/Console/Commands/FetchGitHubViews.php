@@ -75,7 +75,9 @@ class FetchGitHubViews extends Command
                 Log::error('GitHub訪問数データ取得エラー', [
                     'repository_id' => $repository->id,
                     'repository' => $repository->full_name,
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString(),
+                    'timestamp' => now()->toDateTimeString()
                 ]);
             }
         }
@@ -125,6 +127,15 @@ class FetchGitHubViews extends Command
         ])->get("https://api.github.com/repos/{$repository->full_name}/traffic/views");
 
         if (!$response->successful()) {
+            $errorDetails = [
+                'status' => $response->status(),
+                'body' => $response->body(),
+                'headers' => $response->headers(),
+                'repository' => $repository->full_name,
+                'token_length' => strlen($token)
+            ];
+            
+            Log::error('GitHub API エラー', $errorDetails);
             throw new Exception("GitHub API エラー: {$response->status()} - {$response->body()}");
         }
 
@@ -160,10 +171,10 @@ class FetchGitHubViews extends Command
             $result = GitHubView::updateOrCreate(
                 [
                     'repository_id' => $repository->id,
-                    'project' => $repository->full_name,
                     'date' => $dateString
                 ],
                 [
+                    'project' => $repository->full_name,
                     'count' => $viewData['count'],
                     'uniques' => $viewData['uniques']
                 ]

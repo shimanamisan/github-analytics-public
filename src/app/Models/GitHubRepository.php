@@ -22,8 +22,7 @@ class GitHubRepository extends Model
         'repo',
         'name',
         'description',
-        'is_active',
-        'github_token'
+        'is_active'
     ];
 
     protected $casts = [
@@ -80,10 +79,10 @@ class GitHubRepository extends Model
 
     /**
      * 使用するGitHubトークンを取得
-     * リポジトリ専用トークンがない場合は、環境設定のトークンを使用
+     * リポジトリの所有者のトークンを使用
      */
-    public function getTokenAttribute(): string
+    public function getTokenAttribute(): ?string
     {
-        return $this->github_token ?: config('services.github.token');
+        return $this->user ? $this->user->getGitHubToken() : null;
     }
 }

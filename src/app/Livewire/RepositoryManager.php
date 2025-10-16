@@ -52,12 +52,8 @@ class RepositoryManager extends Component
     {
         $user = auth()->user();
         
-        // 管理者の場合はすべてのリポジトリを表示、一般ユーザーの場合は自分のリポジトリのみ
-        $query = GitHubRepository::query();
-        
-        if (!$user->isAdmin()) {
-            $query->forUser($user->id);
-        }
+        // すべてのユーザー（管理者含む）は自分のリポジトリのみを表示
+        $query = GitHubRepository::forUser($user->id);
         
         $repositories = $query
             ->when($this->search, function ($query) {
@@ -80,9 +76,9 @@ class RepositoryManager extends Component
     {
         $repository = GitHubRepository::findOrFail($repositoryId);
         
-        // 一般ユーザーの場合は自分のリポジトリかチェック
+        // 自分のリポジトリかチェック
         $user = auth()->user();
-        if (!$user->isAdmin() && $repository->user_id !== $user->id) {
+        if ($repository->user_id !== $user->id) {
             session()->flash('error', 'このリポジトリを編集する権限がありません。');
             return;
         }
@@ -132,14 +128,11 @@ class RepositoryManager extends Component
         try {
             $repository = GitHubRepository::findOrFail($this->repositoryId);
             
-            // 一般ユーザーの場合は自分のリポジトリかチェック
-            if (!$user->isAdmin() && $repository->user_id !== $user->id) {
+            // 自分のリポジトリかチェック
+            if ($repository->user_id !== $user->id) {
                 session()->flash('error', 'このリポジトリを更新する権限がありません。');
                 return;
             }
-            
-            // ユーザー固有のGitHubトークンを取得
-            $token = $user->getGitHubToken();
             
             $repository->update([
                 'owner' => $this->owner,
@@ -147,7 +140,6 @@ class RepositoryManager extends Component
                 'name' => $this->name,
                 'description' => $this->description,
                 'is_active' => $this->is_active,
-                'github_token' => $token, // ユーザーのトークンを使用
             ]);
             session()->flash('message', 'リポジトリが正常に更新されました。');
             
@@ -173,9 +165,9 @@ class RepositoryManager extends Component
         try {
             $repository = GitHubRepository::findOrFail($repositoryId);
             
-            // 一般ユーザーの場合は自分のリポジトリかチェック
+            // 自分のリポジトリかチェック
             $user = auth()->user();
-            if (!$user->isAdmin() && $repository->user_id !== $user->id) {
+            if ($repository->user_id !== $user->id) {
                 session()->flash('error', 'このリポジトリを削除する権限がありません。');
                 return;
             }
@@ -192,9 +184,9 @@ class RepositoryManager extends Component
         try {
             $repository = GitHubRepository::findOrFail($repositoryId);
             
-            // 一般ユーザーの場合は自分のリポジトリかチェック
+            // 自分のリポジトリかチェック
             $user = auth()->user();
-            if (!$user->isAdmin() && $repository->user_id !== $user->id) {
+            if ($repository->user_id !== $user->id) {
                 session()->flash('error', 'このリポジトリのステータスを変更する権限がありません。');
                 return;
             }
@@ -246,15 +238,37 @@ class RepositoryManager extends Component
                 $this->fetchMessage = 'データ取得が完了しました';
                 session()->flash('message', "リポジトリ「{$repoName}」の訪問数データを正常に取得しました。");
                 
-                // ログに記録
+                // 詳細なログに記録
                 Log::info('手動でGitHub訪問数データを取得しました', [
                     'user' => auth()->user()->email,
                     'repository' => $repository->full_name,
-                    'repository_id' => $repositoryId
+                    'repository_id' => $repositoryId,
+                    'exit_code' => $exitCode,
+                    'timestamp' => now()->toDateTimeString()
                 ]);
             } else {
                 $this->fetchMessage = 'データ取得中にエラーが発生しました';
-                session()->flash('error', 'データ取得中にエラーが発生しました。');
+                
+                // Artisanコマンドの出力を取得
+                $output = Artisan::output();
+                
+                // より詳細なエラーメッセージを表示
+                $errorMessage = 'データ取得中にエラーが発生しました。';
+                if (!empty($output)) {
+                    $errorMessage .= ' 詳細: ' . trim($output);
+                }
+                
+                session()->flash('error', $errorMessage);
+                
+                // 詳細なエラーログ
+                Log::error('手動GitHub訪問数データ取得でエラーが発生', [
+                    'user' => auth()->user()->email,
+                    'repository_id' => $repositoryId,
+                    'repository' => $repository->full_name,
+                    'exit_code' => $exitCode,
+                    'artisan_output' => $output,
+                    'timestamp' => now()->toDateTimeString()
+                ]);
             }
             
         } catch (\Exception $e) {
@@ -264,7 +278,9 @@ class RepositoryManager extends Component
             Log::error('手動GitHub訪問数データ取得エラー', [
                 'user' => auth()->user()->email,
                 'repository_id' => $repositoryId,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'timestamp' => now()->toDateTimeString()
             ]);
         } finally {
             $this->isFetching = false;
@@ -294,14 +310,35 @@ class RepositoryManager extends Component
                 $this->fetchMessage = '全リポジトリのデータ取得が完了しました';
                 session()->flash('message', "全{$activeCount}件のリポジトリの訪問数データを正常に取得しました。");
                 
-                // ログに記録
+                // 詳細なログに記録
                 Log::info('手動で全リポジトリのGitHub訪問数データを取得しました', [
                     'user' => auth()->user()->email,
-                    'repository_count' => $activeCount
+                    'repository_count' => $activeCount,
+                    'exit_code' => $exitCode,
+                    'timestamp' => now()->toDateTimeString()
                 ]);
             } else {
                 $this->fetchMessage = 'データ取得中にエラーが発生しました';
-                session()->flash('error', 'データ取得中にエラーが発生しました。');
+                
+                // Artisanコマンドの出力を取得
+                $output = Artisan::output();
+                
+                // より詳細なエラーメッセージを表示
+                $errorMessage = 'データ取得中にエラーが発生しました。';
+                if (!empty($output)) {
+                    $errorMessage .= ' 詳細: ' . trim($output);
+                }
+                
+                session()->flash('error', $errorMessage);
+                
+                // 詳細なエラーログ
+                Log::error('手動全リポジトリGitHub訪問数データ取得でエラーが発生', [
+                    'user' => auth()->user()->email,
+                    'repository_count' => $activeCount,
+                    'exit_code' => $exitCode,
+                    'artisan_output' => $output,
+                    'timestamp' => now()->toDateTimeString()
+                ]);
             }
             
         } catch (\Exception $e) {
@@ -310,7 +347,9 @@ class RepositoryManager extends Component
             
             Log::error('手動全リポジトリGitHub訪問数データ取得エラー', [
                 'user' => auth()->user()->email,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'timestamp' => now()->toDateTimeString()
             ]);
         } finally {
             $this->isFetching = false;
