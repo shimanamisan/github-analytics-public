@@ -45,9 +45,16 @@ class FetchGitHubFollowers extends Command
             return 1;
         }
 
-        $token = config('services.github.token');
+        // ユーザー固有のトークンを取得
+        $user = \App\Models\User::where('github_owner', $username)->first();
+        if (!$user || !$user->hasGitHubSettings()) {
+            $this->error("GitHub設定が完了していないユーザーです: {$username}");
+            return 1;
+        }
+
+        $token = $user->getGitHubToken();
         if (!$token) {
-            $this->error('GitHubトークンが設定されていません。');
+            $this->error('GitHubトークンが取得できません。');
             return 1;
         }
 

@@ -24,16 +24,21 @@ class AdminController extends Controller
             $recentRepositories = GitHubRepository::latest()->take(5)->get();
             $recentViews = GitHubView::with('repository')->latest()->take(10)->get();
         } else {
-            $userRepositories = GitHubRepository::forUser($user->id);
-            $totalRepositories = $userRepositories->count();
-            $activeRepositories = $userRepositories->where('is_active', true)->count();
+            // 一般ユーザーの場合は自分が登録したリポジトリのデータのみ表示
+            $totalRepositories = GitHubRepository::where('user_id', $user->id)->count();
+            $activeRepositories = GitHubRepository::where('user_id', $user->id)
+                ->where('is_active', true)
+                ->count();
             
             // ユーザーのリポジトリIDを取得
-            $repositoryIds = $userRepositories->pluck('id');
+            $repositoryIds = GitHubRepository::where('user_id', $user->id)->pluck('id');
             
             $totalViews = GitHubView::whereIn('repository_id', $repositoryIds)->sum('count');
             $totalUniques = GitHubView::whereIn('repository_id', $repositoryIds)->sum('uniques');
-            $recentRepositories = $userRepositories->latest()->take(5)->get();
+            $recentRepositories = GitHubRepository::where('user_id', $user->id)
+                ->latest()
+                ->take(5)
+                ->get();
             $recentViews = GitHubView::with('repository')
                 ->whereIn('repository_id', $repositoryIds)
                 ->latest()

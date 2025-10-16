@@ -26,6 +26,10 @@ class User extends Authenticatable
         'password',
         'is_admin',
         'is_active',
+        'github_token',
+        'github_owner',
+        'github_settings_completed',
+        'github_token_updated_at',
     ];
 
     /**
@@ -36,6 +40,7 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
+        'github_token',
     ];
 
     /**
@@ -50,6 +55,8 @@ class User extends Authenticatable
             'password' => 'hashed',
             'is_admin' => 'boolean',
             'is_active' => 'boolean',
+            'github_settings_completed' => 'boolean',
+            'github_token_updated_at' => 'datetime',
         ];
     }
 
@@ -107,5 +114,76 @@ class User extends Authenticatable
     public function gitHubRepositories(): HasMany
     {
         return $this->hasMany(GitHubRepository::class);
+    }
+
+    /**
+     * GitHub設定が完了しているかチェック
+     */
+    public function hasGitHubSettings(): bool
+    {
+        return $this->github_settings_completed && 
+               !empty($this->github_token) && 
+               !empty($this->github_owner);
+    }
+
+    /**
+     * GitHubトークンを設定（暗号化して保存）
+     */
+    public function setGitHubToken(string $token): void
+    {
+        $this->github_token = encrypt($token);
+        $this->github_token_updated_at = now();
+    }
+
+    /**
+     * GitHubトークンを取得（復号化して返す）
+     */
+    public function getGitHubToken(): ?string
+    {
+        if (empty($this->github_token)) {
+            return null;
+        }
+        
+        try {
+            return decrypt($this->github_token);
+        } catch (\Exception $e) {
+            // 復号化に失敗した場合はnullを返す
+            return null;
+        }
+    }
+
+    /**
+     * GitHubトークンが設定されているかチェック
+     */
+    public function hasGitHubToken(): bool
+    {
+        return !empty($this->github_token);
+    }
+
+    /**
+     * GitHubオーナー名を取得
+     */
+    public function getGitHubOwner(): ?string
+    {
+        return $this->github_owner;
+    }
+
+    /**
+     * GitHub設定を完了としてマーク
+     */
+    public function markGitHubSettingsCompleted(): void
+    {
+        $this->github_settings_completed = true;
+    }
+
+    /**
+     * GitHub設定をリセット
+     */
+    public function resetGitHubSettings(): void
+    {
+        $this->github_token = null;
+        $this->github_owner = null;
+        $this->github_settings_completed = false;
+        $this->github_token_updated_at = null;
     }
 }
