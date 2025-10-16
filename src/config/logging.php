@@ -135,6 +135,7 @@ return [
             'days' => env('LOG_DAILY_DAYS', 7),
             'replace_placeholders' => true,
             'permission' => 0664,
+            'tap' => [App\Logging\CustomizeFormatter::class],
         ],
 
     ],
