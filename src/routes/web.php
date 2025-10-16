@@ -9,6 +9,13 @@ Route::prefix('github')->name('github.')->middleware(['auth', 'check.user.status
     Route::get('/followers', [App\Http\Controllers\GitHubFollowerController::class, 'index'])->name('followers');
     Route::get('/follower-details', [App\Http\Controllers\GitHubFollowerController::class, 'details'])->name('follower-details');
     
+    // GitHub設定管理
+    Route::get('/settings', [App\Http\Controllers\GitHubSettingsController::class, 'index'])->name('settings');
+    Route::post('/settings', [App\Http\Controllers\GitHubSettingsController::class, 'store'])->name('settings.store');
+    Route::put('/settings', [App\Http\Controllers\GitHubSettingsController::class, 'update'])->name('settings.update');
+    Route::delete('/settings', [App\Http\Controllers\GitHubSettingsController::class, 'destroy'])->name('settings.destroy');
+    Route::post('/settings/test', [App\Http\Controllers\GitHubSettingsController::class, 'testToken'])->name('settings.test');
+    
     // API エンドポイント
     Route::get('/api/followers/chart', [App\Http\Controllers\GitHubFollowerController::class, 'chart'])->name('followers.chart');
     Route::get('/api/followers/stats', [App\Http\Controllers\GitHubFollowerController::class, 'stats'])->name('followers.stats');

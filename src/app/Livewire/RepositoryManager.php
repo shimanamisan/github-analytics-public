@@ -22,7 +22,6 @@ class RepositoryManager extends Component
     public $name = '';
     public $description = '';
     public $is_active = true;
-    public $github_token = '';
     
     // フィルタリング
     public $search = '';
@@ -38,7 +37,6 @@ class RepositoryManager extends Component
         'name' => 'nullable|string|max:255',
         'description' => 'nullable|string|max:1000',
         'is_active' => 'boolean',
-        'github_token' => 'nullable|string|max:255',
     ];
 
     protected $messages = [
@@ -48,7 +46,6 @@ class RepositoryManager extends Component
         'repo.max' => 'リポジトリ名は255文字以内で入力してください',
         'name.max' => '表示名は255文字以内で入力してください',
         'description.max' => '説明は1000文字以内で入力してください',
-        'github_token.max' => 'GitHubトークンは255文字以内で入力してください',
     ];
 
     public function render()
@@ -97,7 +94,6 @@ class RepositoryManager extends Component
         $this->name = $repository->name;
         $this->description = $repository->description;
         $this->is_active = $repository->is_active;
-        $this->github_token = $repository->github_token;
         
         $this->showModal = true;
     }
@@ -117,7 +113,6 @@ class RepositoryManager extends Component
         $this->name = '';
         $this->description = '';
         $this->is_active = true;
-        $this->github_token = '';
         $this->resetValidation();
     }
 
@@ -125,15 +120,34 @@ class RepositoryManager extends Component
     {
         $this->validate();
 
+        $user = auth()->user();
+
+        // ユーザーがGitHub設定を完了しているか確認
+        if (!$user->hasGitHubSettings()) {
+            session()->flash('error', 'リポジトリを更新する前に、GitHub設定を完了してください。');
+            $this->redirect(route('github.settings'));
+            return;
+        }
+
         try {
             $repository = GitHubRepository::findOrFail($this->repositoryId);
+            
+            // 一般ユーザーの場合は自分のリポジトリかチェック
+            if (!$user->isAdmin() && $repository->user_id !== $user->id) {
+                session()->flash('error', 'このリポジトリを更新する権限がありません。');
+                return;
+            }
+            
+            // ユーザー固有のGitHubトークンを取得
+            $token = $user->getGitHubToken();
+            
             $repository->update([
                 'owner' => $this->owner,
                 'repo' => $this->repo,
                 'name' => $this->name,
                 'description' => $this->description,
                 'is_active' => $this->is_active,
-                'github_token' => $this->github_token ?: null,
+                'github_token' => $token, // ユーザーのトークンを使用
             ]);
             session()->flash('message', 'リポジトリが正常に更新されました。');
             

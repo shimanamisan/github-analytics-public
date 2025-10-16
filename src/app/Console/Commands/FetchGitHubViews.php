@@ -101,10 +101,15 @@ class FetchGitHubViews extends Command
      */
     private function fetchRepositoryViews(GitHubRepository $repository): array
     {
-        $token = $repository->token;
-        
+        // リポジトリの所有者のトークンを取得
+        $user = $repository->user;
+        if (!$user || !$user->hasGitHubSettings()) {
+            throw new Exception('リポジトリの所有者のGitHub設定が完了していません');
+        }
+
+        $token = $user->getGitHubToken();
         if (!$token) {
-            throw new Exception('GitHubトークンが設定されていません');
+            throw new Exception('リポジトリの所有者のGitHubトークンが取得できません');
         }
 
         // 最新の記録日を取得

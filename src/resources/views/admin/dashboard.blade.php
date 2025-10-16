@@ -22,7 +22,7 @@
                     <div class="ml-5 w-0 flex-1">
                         <dl>
                             <dt class="text-sm font-medium text-gray-500 truncate">登録リポジトリ数</dt>
-                            <dd class="text-lg font-medium text-gray-900">{{ App\Models\GitHubRepository::count() }}</dd>
+                            <dd class="text-lg font-medium text-gray-900">{{ $totalRepositories }}</dd>
                         </dl>
                     </div>
                 </div>
@@ -40,7 +40,7 @@
                     <div class="ml-5 w-0 flex-1">
                         <dl>
                             <dt class="text-sm font-medium text-gray-500 truncate">アクティブリポジトリ</dt>
-                            <dd class="text-lg font-medium text-gray-900">{{ App\Models\GitHubRepository::where('is_active', true)->count() }}</dd>
+                            <dd class="text-lg font-medium text-gray-900">{{ $activeRepositories }}</dd>
                         </dl>
                     </div>
                 </div>
@@ -57,8 +57,8 @@
                     </div>
                     <div class="ml-5 w-0 flex-1">
                         <dl>
-                            <dt class="text-sm font-medium text-gray-500 truncate">総データ件数</dt>
-                            <dd class="text-lg font-medium text-gray-900">{{ App\Models\GitHubView::count() }}</dd>
+                            <dt class="text-sm font-medium text-gray-500 truncate">総訪問数</dt>
+                            <dd class="text-lg font-medium text-gray-900">{{ number_format($totalViews) }}</dd>
                         </dl>
                     </div>
                 </div>
@@ -75,13 +75,8 @@
                     </div>
                     <div class="ml-5 w-0 flex-1">
                         <dl>
-                            <dt class="text-sm font-medium text-gray-500 truncate">最終データ取得</dt>
-                            <dd class="text-lg font-medium text-gray-900">
-                                @php
-                                    $latestView = App\Models\GitHubView::latest('created_at')->first();
-                                @endphp
-                                {{ $latestView ? $latestView->created_at->format('m/d H:i') : '未取得' }}
-                            </dd>
+                            <dt class="text-sm font-medium text-gray-500 truncate">ユニーク訪問数</dt>
+                            <dd class="text-lg font-medium text-gray-900">{{ number_format($totalUniques) }}</dd>
                         </dl>
                     </div>
                 </div>
@@ -95,9 +90,6 @@
             <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">最近のアクティビティ</h3>
             <div class="flow-root">
                 <ul class="-my-5 divide-y divide-gray-200">
-                    @php
-                        $recentRepositories = App\Models\GitHubRepository::latest('created_at')->take(5)->get();
-                    @endphp
                     @forelse($recentRepositories as $repo)
                         <li class="py-4">
                             <div class="flex items-center space-x-4">
