@@ -20,7 +20,6 @@ class GitHubRepository extends Model
         'user_id',
         'owner',
         'repo',
-        'name',
         'description',
         'is_active'
     ];
@@ -70,11 +69,11 @@ class GitHubRepository extends Model
     }
 
     /**
-     * 表示名を取得（設定されていない場合はフルネームを返す）
+     * 表示名を取得（フルネームを返す）
      */
     public function getDisplayNameAttribute(): string
     {
-        return $this->name ?: $this->full_name;
+        return $this->full_name;
     }
 
     /**

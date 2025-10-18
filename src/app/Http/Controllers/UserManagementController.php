@@ -118,4 +118,29 @@ class UserManagementController extends Controller
         return redirect()->route('admin.users.index')
             ->with('success', "ユーザーを{$status}しました。");
     }
+
+    /**
+     * パスワード変更フォームを表示
+     */
+    public function showChangePasswordForm(User $user)
+    {
+        return view('admin.users.change-password', compact('user'));
+    }
+
+    /**
+     * ユーザーのパスワードを変更
+     */
+    public function changePassword(Request $request, User $user)
+    {
+        $request->validate([
+            'password' => 'required|string|min:8|confirmed',
+        ]);
+
+        $user->update([
+            'password' => Hash::make($request->password),
+        ]);
+
+        return redirect()->route('admin.users.index')
+            ->with('success', "{$user->name}のパスワードを変更しました。");
+    }
 }

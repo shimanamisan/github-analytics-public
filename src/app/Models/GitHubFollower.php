@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class GitHubFollower extends Model
 {
@@ -16,6 +17,7 @@ class GitHubFollower extends Model
     protected $table = 'github_followers';
 
     protected $fillable = [
+        'user_id',
         'username',
         'date',
         'followers_count',
@@ -31,6 +33,14 @@ class GitHubFollower extends Model
     ];
 
     /**
+     * ユーザーとの関連
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    /**
      * フォロワー詳細情報との関連
      */
     public function followerDetails(): HasMany
@@ -39,9 +49,17 @@ class GitHubFollower extends Model
     }
 
     /**
-     * 特定のユーザーのフォロワー統計を取得
+     * 特定のシステムユーザーのフォロワー統計を取得
      */
-    public function scopeForUser($query, string $username)
+    public function scopeForUser($query, $userId)
+    {
+        return $query->where('user_id', $userId);
+    }
+    
+    /**
+     * 特定のGitHubユーザー名のフォロワー統計を取得
+     */
+    public function scopeForGitHubUsername($query, string $username)
     {
         return $query->where('username', $username);
     }
