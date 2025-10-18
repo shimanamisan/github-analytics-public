@@ -1,0 +1,18 @@
+{
+    "The :attribute field confirmation does not match.": ":attributeの確認が一致しません。",
+    "The :attribute field must be at least :min characters.": ":attributeは:min文字以上でなければなりません。",
+    "The :attribute field is required.": ":attributeは必須です。",
+    "The :attribute field must be a valid email address.": ":attributeは有効なメールアドレスでなければなりません。",
+    "The :attribute has already been taken.": ":attributeはすでに使用されています。",
+    "These credentials do not match our records.": "認証情報が一致しません。",
+    "The password field confirmation does not match.": "パスワードの確認が一致しません。",
+    "The password field must be at least :min characters.": "パスワードは:min文字以上でなければなりません。",
+    "The password field is required.": "パスワードは必須です。",
+    "The email field is required.": "メールアドレスは必須です。",
+    "The email field must be a valid email address.": "メールアドレスは有効なメールアドレスでなければなりません。",
+    "The email has already been taken.": "メールアドレスはすでに使用されています。",
+    "The name field is required.": "名前は必須です。",
+    "The name field must be a string.": "名前は文字列でなければなりません。",
+    "The name field must not be greater than :max characters.": "名前は:max文字以下でなければなりません。"
+}
+
