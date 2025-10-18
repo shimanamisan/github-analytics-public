@@ -77,6 +77,9 @@
                             <a href="{{ route('admin.users.edit', $user) }}" class="text-blue-600 hover:text-blue-900 text-sm font-medium">
                                 編集
                             </a>
+                            <a href="{{ route('admin.users.change-password', $user) }}" class="text-purple-600 hover:text-purple-900 text-sm font-medium">
+                                パスワード変更
+                            </a>
                             @if($user->id !== auth()->id())
                                 <form method="POST" action="{{ route('admin.users.toggle-status', $user) }}" class="inline">
                                     @csrf

@@ -23,8 +23,6 @@ Route::prefix('github')->name('github.')->middleware(['auth', 'check.user.status
     Route::get('/api/followers/recent', [App\Http\Controllers\GitHubFollowerController::class, 'recentActivity'])->name('followers.recent');
 });
 
-
-
 // 認証ルート
 Route::get('/login', [App\Http\Controllers\Auth\LoginController::class, 'showLoginForm'])->name('login')->middleware('guest');
 Route::post('/login', [App\Http\Controllers\Auth\LoginController::class, 'login'])->middleware('guest');
@@ -42,5 +40,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'check.user.status']
     Route::middleware('admin')->group(function () {
         Route::resource('users', App\Http\Controllers\UserManagementController::class);
         Route::patch('/users/{user}/toggle-status', [App\Http\Controllers\UserManagementController::class, 'toggleStatus'])->name('users.toggle-status');
+        Route::get('/users/{user}/change-password', [App\Http\Controllers\UserManagementController::class, 'showChangePasswordForm'])->name('users.change-password');
+        Route::put('/users/{user}/change-password', [App\Http\Controllers\UserManagementController::class, 'changePassword'])->name('users.update-password');
     });
 });

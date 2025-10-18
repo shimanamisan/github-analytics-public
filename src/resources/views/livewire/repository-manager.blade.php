@@ -77,7 +77,6 @@
             <thead class="bg-gray-50">
                 <tr>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">リポジトリ</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">表示名</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ステータス</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">登録日</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
@@ -100,9 +99,6 @@
                                     <div class="text-sm text-gray-500">{{ $repository->description ?? '説明なし' }}</div>
                                 </div>
                             </div>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {{ $repository->name ?? '-' }}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $repository->is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
@@ -216,17 +212,6 @@
                         </div>
                         
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">表示名</label>
-                            <input 
-                                type="text" 
-                                wire:model="name" 
-                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent @error('name') border-red-500 @enderror"
-                                placeholder="例: Hello World プロジェクト"
-                            >
-                            @error('name') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
-                        </div>
-                        
-                        <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">説明</label>
                             <textarea 
                                 wire:model="description" 
@@ -235,17 +220,6 @@
                                 placeholder="リポジトリの説明を入力してください"
                             ></textarea>
                             @error('description') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">GitHubトークン（オプション）</label>
-                            <input 
-                                type="password" 
-                                wire:model="github_token" 
-                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent @error('github_token') border-red-500 @enderror"
-                                placeholder="リポジトリ専用トークン（空白の場合は環境設定を使用）"
-                            >
-                            @error('github_token') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                         </div>
                         
                         <div class="flex items-center">

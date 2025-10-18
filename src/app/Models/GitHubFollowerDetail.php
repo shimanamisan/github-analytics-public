@@ -16,6 +16,7 @@ class GitHubFollowerDetail extends Model
     protected $table = 'github_follower_details';
 
     protected $fillable = [
+        'user_id',
         'target_username',
         'follower_username',
         'follower_name',
@@ -39,6 +40,14 @@ class GitHubFollowerDetail extends Model
     ];
 
     /**
+     * ユーザーとの関連
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    /**
      * フォロワー統計との関連
      */
     public function githubFollower(): BelongsTo
@@ -55,9 +64,17 @@ class GitHubFollowerDetail extends Model
     }
 
     /**
-     * 特定のユーザーのフォロワーを取得
+     * 特定のシステムユーザーのフォロワーを取得
      */
-    public function scopeForUser($query, string $username)
+    public function scopeForUser($query, $userId)
+    {
+        return $query->where('user_id', $userId);
+    }
+
+    /**
+     * 特定のGitHubユーザー名のフォロワーを取得
+     */
+    public function scopeForGitHubUsername($query, string $username)
     {
         return $query->where('target_username', $username);
     }

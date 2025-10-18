@@ -17,12 +17,12 @@
                 @auth
                     @if(auth()->user()->isAdmin())
                     <div>
-                        <label for="username" class="block text-sm font-medium text-gray-700 mb-2">ユーザー名</label>
-                        <select name="username" id="username" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                        <label for="user_id" class="block text-sm font-medium text-gray-700 mb-2">ユーザー</label>
+                        <select name="user_id" id="user_id" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
                             <option value="">すべて</option>
-                            @foreach($usernames as $username)
-                                <option value="{{ $username }}" {{ request('username') == $username ? 'selected' : '' }}>
-                                    {{ $username }}
+                            @foreach($users as $user)
+                                <option value="{{ $user->id }}" {{ request('user_id') == $user->id ? 'selected' : '' }}>
+                                    {{ $user->name }} ({{ $user->github_owner }})
                                 </option>
                             @endforeach
                         </select>

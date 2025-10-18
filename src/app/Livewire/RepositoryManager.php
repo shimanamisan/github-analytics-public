@@ -19,7 +19,6 @@ class RepositoryManager extends Component
     // フォームフィールド
     public $owner = '';
     public $repo = '';
-    public $name = '';
     public $description = '';
     public $is_active = true;
     
@@ -34,7 +33,6 @@ class RepositoryManager extends Component
     protected $rules = [
         'owner' => 'required|string|max:255',
         'repo' => 'required|string|max:255',
-        'name' => 'nullable|string|max:255',
         'description' => 'nullable|string|max:1000',
         'is_active' => 'boolean',
     ];
@@ -44,7 +42,6 @@ class RepositoryManager extends Component
         'repo.required' => 'リポジトリ名は必須です',
         'owner.max' => 'オーナー名は255文字以内で入力してください',
         'repo.max' => 'リポジトリ名は255文字以内で入力してください',
-        'name.max' => '表示名は255文字以内で入力してください',
         'description.max' => '説明は1000文字以内で入力してください',
     ];
 
@@ -59,8 +56,7 @@ class RepositoryManager extends Component
             ->when($this->search, function ($query) {
                 $query->where(function ($q) {
                     $q->where('owner', 'like', '%' . $this->search . '%')
-                      ->orWhere('repo', 'like', '%' . $this->search . '%')
-                      ->orWhere('name', 'like', '%' . $this->search . '%');
+                      ->orWhere('repo', 'like', '%' . $this->search . '%');
                 });
             })
             ->when($this->activeFilter !== 'all', function ($query) {
@@ -87,7 +83,6 @@ class RepositoryManager extends Component
         $this->repositoryId = $repository->id;
         $this->owner = $repository->owner;
         $this->repo = $repository->repo;
-        $this->name = $repository->name;
         $this->description = $repository->description;
         $this->is_active = $repository->is_active;
         
@@ -106,7 +101,6 @@ class RepositoryManager extends Component
         $this->repositoryId = null;
         $this->owner = '';
         $this->repo = '';
-        $this->name = '';
         $this->description = '';
         $this->is_active = true;
         $this->resetValidation();
@@ -137,7 +131,6 @@ class RepositoryManager extends Component
             $repository->update([
                 'owner' => $this->owner,
                 'repo' => $this->repo,
-                'name' => $this->name,
                 'description' => $this->description,
                 'is_active' => $this->is_active,
             ]);

@@ -24,15 +24,18 @@ class GitHubFollowerController extends Controller
         // ユーザー制限を適用
         if ($user && !$user->isAdmin()) {
             // 一般ユーザーは自分のデータのみアクセス可能
-            $query->forUser($user->name);
+            $query->forUser($user->id);
         } else if (!$user) {
             // 認証されていないユーザーは何も表示しない
             $query->whereRaw('1 = 0');
         }
         
-        // ユーザーでフィルタリング（管理者のみ）
-        if ($request->filled('username') && $user && $user->isAdmin()) {
-            $query->forUser($request->username);
+        // ユーザーでフィルタリング（管理者のみ - user_idで指定）
+        if ($request->filled('user_id') && $user && $user->isAdmin()) {
+            $query->forUser($request->user_id);
+        } else if ($user && $user->isAdmin()) {
+            // 管理者がフィルターを指定しない場合は、自分のデータのみ表示
+            $query->forUser($user->id);
         }
         
         // 日付範囲でフィルタリング
@@ -48,12 +51,11 @@ class GitHubFollowerController extends Controller
         $followers = $query->orderBy('date', 'desc')->paginate(30);
         
         // ユーザー一覧を取得（フィルター用）
+        $users = collect();
         if ($user && $user->isAdmin()) {
-            $usernames = GitHubFollower::distinct()->pluck('username');
+            $users = \App\Models\User::where('github_settings_completed', true)->get(['id', 'name', 'github_owner']);
         } else if ($user) {
-            $usernames = collect([$user->name]);
-        } else {
-            $usernames = collect();
+            $users = collect([$user]);
         }
         
         // チャートデータを準備
@@ -61,14 +63,17 @@ class GitHubFollowerController extends Controller
         
         // ユーザー制限を適用（チャート用）
         if ($user && !$user->isAdmin()) {
-            $chartQuery->forUser($user->name);
+            $chartQuery->forUser($user->id);
         } else if (!$user) {
             $chartQuery->whereRaw('1 = 0');
         }
         
         // フィルターを適用（チャート用）
-        if ($request->filled('username') && $user && $user->isAdmin()) {
-            $chartQuery->forUser($request->username);
+        if ($request->filled('user_id') && $user && $user->isAdmin()) {
+            $chartQuery->forUser($request->user_id);
+        } else if ($user && $user->isAdmin()) {
+            // 管理者がフィルターを指定しない場合は、自分のデータのみ表示
+            $chartQuery->forUser($user->id);
         }
         
         // 日付範囲でフィルタリング（デフォルトは過去30日）
@@ -93,14 +98,17 @@ class GitHubFollowerController extends Controller
         
         // ユーザー制限を適用（統計用）
         if ($user && !$user->isAdmin()) {
-            $statsQuery->forUser($user->name);
+            $statsQuery->forUser($user->id);
         } else if (!$user) {
             $statsQuery->whereRaw('1 = 0');
         }
         
         // フィルターを適用（統計用）
-        if ($request->filled('username') && $user && $user->isAdmin()) {
-            $statsQuery->forUser($request->username);
+        if ($request->filled('user_id') && $user && $user->isAdmin()) {
+            $statsQuery->forUser($request->user_id);
+        } else if ($user && $user->isAdmin()) {
+            // 管理者がフィルターを指定しない場合は、自分のデータのみ表示
+            $statsQuery->forUser($user->id);
         }
         
         if ($request->filled('start_date')) {
@@ -125,12 +133,18 @@ class GitHubFollowerController extends Controller
         // 最新のフォロワー成長率を計算
         $growthRate = null;
         if ($user && !$user->isAdmin()) {
-            $latestRecord = GitHubFollower::forUser($user->name)->latest('date')->first();
+            $latestRecord = GitHubFollower::forUser($user->id)->latest('date')->first();
             if ($latestRecord) {
                 $growthRate = $latestRecord->getGrowthRate(30);
             }
-        } else if ($request->filled('username') && $user && $user->isAdmin()) {
-            $latestRecord = GitHubFollower::forUser($request->username)->latest('date')->first();
+        } else if ($request->filled('user_id') && $user && $user->isAdmin()) {
+            $latestRecord = GitHubFollower::forUser($request->user_id)->latest('date')->first();
+            if ($latestRecord) {
+                $growthRate = $latestRecord->getGrowthRate(30);
+            }
+        } else if ($user && $user->isAdmin()) {
+            // 管理者がフィルターを指定しない場合は、自分のデータの成長率を計算
+            $latestRecord = GitHubFollower::forUser($user->id)->latest('date')->first();
             if ($latestRecord) {
                 $growthRate = $latestRecord->getGrowthRate(30);
             }
@@ -138,7 +152,7 @@ class GitHubFollowerController extends Controller
 
         return view('github.followers', compact(
             'followers', 
-            'usernames', 
+            'users', 
             'chartData', 
             'stats',
             'growthRate'
@@ -148,7 +162,7 @@ class GitHubFollowerController extends Controller
     /**
      * フォロワー詳細情報を表示
      */
-    public function details(Request $request): View
+        public function details(Request $request): View
     {
         $user = Auth::user();
         
@@ -156,14 +170,17 @@ class GitHubFollowerController extends Controller
         
         // ユーザー制限を適用
         if ($user && !$user->isAdmin()) {
-            $query->forUser($user->name);
+            $query->forUser($user->id);
         } else if (!$user) {
             $query->whereRaw('1 = 0');
         }
         
         // ユーザーでフィルタリング（管理者のみ）
-        if ($request->filled('username') && $user && $user->isAdmin()) {
-            $query->forUser($request->username);
+        if ($request->filled('user_id') && $user && $user->isAdmin()) {
+            $query->forUser($request->user_id);
+        } else if ($user && $user->isAdmin()) {
+            // 管理者がフィルターを指定しない場合は、自分のデータのみ表示
+            $query->forUser($user->id);
         }
         
         // フォロワー名で検索
@@ -194,12 +211,11 @@ class GitHubFollowerController extends Controller
         $followerDetails = $query->paginate(20);
         
         // ユーザー一覧を取得（フィルター用）
+        $users = collect();
         if ($user && $user->isAdmin()) {
-            $usernames = GitHubFollowerDetail::distinct()->pluck('target_username');
+            $users = \App\Models\User::where('github_settings_completed', true)->get(['id', 'name', 'github_owner']);
         } else if ($user) {
-            $usernames = collect([$user->name]);
-        } else {
-            $usernames = collect();
+            $users = collect([$user]);
         }
         
         // 統計情報
@@ -207,11 +223,14 @@ class GitHubFollowerController extends Controller
         
         // ユーザー制限を適用
         if ($user && !$user->isAdmin()) {
-            $detailStats->forUser($user->name);
+            $detailStats->forUser($user->id);
         } else if (!$user) {
             $detailStats->whereRaw('1 = 0');
-        } else if ($request->filled('username')) {
-            $detailStats->forUser($request->username);
+        } else if ($request->filled('user_id')) {
+            $detailStats->forUser($request->user_id);
+        } else if ($user && $user->isAdmin()) {
+            // 管理者がフィルターを指定しない場合は、自分のデータのみ表示
+            $detailStats->forUser($user->id);
         }
         
         $detailStats = $detailStats->selectRaw('
@@ -226,14 +245,22 @@ class GitHubFollowerController extends Controller
         // フォロー解除統計を追加
         $unfollowStats = null;
         if ($user && !$user->isAdmin()) {
-            $unfollowStats = GitHubFollowerDetail::forUser($user->name)
+            $unfollowStats = GitHubFollowerDetail::forUser($user->id)
                 ->selectRaw('
                     COUNT(CASE WHEN unfollowed_at >= ? THEN 1 END) as recent_unfollowed,
                     COUNT(CASE WHEN is_active = false THEN 1 END) as total_unfollowed
                 ', [now()->subDays(7)])
                 ->first();
-        } else if ($request->filled('username') && $user && $user->isAdmin()) {
-            $unfollowStats = GitHubFollowerDetail::forUser($request->username)
+        } else if ($request->filled('user_id') && $user && $user->isAdmin()) {
+            $unfollowStats = GitHubFollowerDetail::forUser($request->user_id)
+                ->selectRaw('
+                    COUNT(CASE WHEN unfollowed_at >= ? THEN 1 END) as recent_unfollowed,
+                    COUNT(CASE WHEN is_active = false THEN 1 END) as total_unfollowed
+                ', [now()->subDays(7)])
+                ->first();
+        } else if ($user && $user->isAdmin()) {
+            // 管理者がフィルターを指定しない場合は、自分のデータの統計を表示
+            $unfollowStats = GitHubFollowerDetail::forUser($user->id)
                 ->selectRaw('
                     COUNT(CASE WHEN unfollowed_at >= ? THEN 1 END) as recent_unfollowed,
                     COUNT(CASE WHEN is_active = false THEN 1 END) as total_unfollowed
@@ -243,7 +270,7 @@ class GitHubFollowerController extends Controller
 
         return view('github.follower-details', compact(
             'followerDetails', 
-            'usernames',
+            'users',
             'detailStats',
             'unfollowStats'
         ));
@@ -260,14 +287,17 @@ class GitHubFollowerController extends Controller
         
         // ユーザー制限を適用
         if ($user && !$user->isAdmin()) {
-            $query->forUser($user->name);
+            $query->forUser($user->id);
         } else if (!$user) {
             $query->whereRaw('1 = 0');
         }
         
         // ユーザーでフィルタリング（管理者のみ）
-        if ($request->filled('username') && $user && $user->isAdmin()) {
-            $query->forUser($request->username);
+        if ($request->filled('user_id') && $user && $user->isAdmin()) {
+            $query->forUser($request->user_id);
+        } else if ($user && $user->isAdmin()) {
+            // 管理者がフィルターを指定しない場合は、自分のデータのみ表示
+            $query->forUser($user->id);
         }
         
         // 日付範囲でフィルタリング
@@ -301,11 +331,14 @@ class GitHubFollowerController extends Controller
         
         // ユーザー制限を適用
         if ($user && !$user->isAdmin()) {
-            $query->forUser($user->name);
+            $query->forUser($user->id);
         } else if (!$user) {
             $query->whereRaw('1 = 0');
-        } else if ($request->filled('username')) {
-            $query->forUser($request->username);
+        } else if ($request->filled('user_id') && $user && $user->isAdmin()) {
+            $query->forUser($request->user_id);
+        } else if ($user && $user->isAdmin()) {
+            // 管理者がフィルターを指定しない場合は、自分のデータのみ表示
+            $query->forUser($user->id);
         }
         
         $stats = $query->selectRaw('

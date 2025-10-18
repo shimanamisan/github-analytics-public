@@ -113,9 +113,9 @@ class GitHubViewController extends Controller
         
         // リポジトリ一覧を取得（フィルター用）
         if ($user && $user->isAdmin()) {
-            $repositories = GitHubRepository::orderBy('name')->get();
+            $repositories = GitHubRepository::orderBy('owner')->orderBy('repo')->get();
         } else {
-            $repositories = $user ? GitHubRepository::forUser($user->id)->orderBy('name')->get() : collect();
+            $repositories = $user ? GitHubRepository::forUser($user->id)->orderBy('owner')->orderBy('repo')->get() : collect();
         }
         
         // プロジェクト一覧を取得（後方互換性のため）
