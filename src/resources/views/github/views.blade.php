@@ -36,42 +36,37 @@
                             <!-- ナビゲーションリンクは削除 -->
                         </div>
                     </div>
+                    @auth
                     <div class="hidden sm:ml-6 sm:flex sm:items-center">
                         <div class="ml-3 relative">
                             <div class="flex items-center space-x-4">
-                                @auth
-                                    <div class="relative group">
-                                        <button type="button" class="flex items-center text-sm text-gray-500 hover:text-gray-700 focus:outline-none">
-                                            <span>{{ Auth::user()->name ?? Auth::user()->email }}</span>
-                                            <svg class="ml-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                                            </svg>
-                                        </button>
-                                        
-                                        <!-- ドロップダウンメニュー -->
-                                        <div class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
-                                            <a href="{{ route('admin.dashboard') }}" 
-                                               class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                                管理画面
-                                            </a>
-                                            <form method="POST" action="{{ route('logout') }}" class="block">
-                                                @csrf
-                                                <button type="submit" 
-                                                        class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                                    ログアウト
-                                                </button>
-                                            </form>
-                                        </div>
+                                <div class="relative group">
+                                    <button type="button" class="flex items-center text-sm text-gray-500 hover:text-gray-700 focus:outline-none">
+                                        <span>{{ Auth::user()->name ?? Auth::user()->email }}</span>
+                                        <svg class="ml-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                        </svg>
+                                    </button>
+                                    
+                                    <!-- ドロップダウンメニュー -->
+                                    <div class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+                                        <a href="{{ route('admin.dashboard') }}" 
+                                           class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                            管理画面
+                                        </a>
+                                        <form method="POST" action="{{ route('logout') }}" class="block">
+                                            @csrf
+                                            <button type="submit" 
+                                                    class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                                ログアウト
+                                            </button>
+                                        </form>
                                     </div>
-                                @else
-                                    <a href="{{ route('login') }}" 
-                                       class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium">
-                                        ログイン
-                                    </a>
-                                @endauth
+                                </div>
                             </div>
                         </div>
                     </div>
+                    @endauth
                 </div>
             </div>
         </nav>
