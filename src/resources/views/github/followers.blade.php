@@ -53,7 +53,7 @@
     </div>
             
     <!-- 統計情報 -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
         <div class="bg-white overflow-hidden shadow rounded-lg">
             <div class="p-5">
                 <div class="flex items-center">
@@ -64,7 +64,7 @@
                     </div>
                     <div class="ml-5 w-0 flex-1">
                         <dl>
-                            <dt class="text-sm font-medium text-gray-500 truncate">最大フォロワー数</dt>
+                            <dt class="text-sm font-medium text-gray-500 truncate">フォロワー数</dt>
                             <dd class="text-lg font-medium text-gray-900">{{ $stats && $stats->max_followers ? number_format($stats->max_followers) : '-' }}</dd>
                             @if($growthRate !== null)
                                 <dd class="text-sm {{ $growthRate >= 0 ? 'text-green-600' : 'text-red-600' }}">
@@ -77,23 +77,6 @@
             </div>
         </div>
 
-        <div class="bg-white overflow-hidden shadow rounded-lg">
-            <div class="p-5">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                        <svg class="h-6 w-6 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                        </svg>
-                    </div>
-                    <div class="ml-5 w-0 flex-1">
-                        <dl>
-                            <dt class="text-sm font-medium text-gray-500 truncate">平均フォロワー数</dt>
-                            <dd class="text-lg font-medium text-gray-900">{{ $stats && $stats->avg_followers ? number_format($stats->avg_followers) : '-' }}</dd>
-                        </dl>
-                    </div>
-                </div>
-            </div>
-        </div>
 
         <div class="bg-white overflow-hidden shadow rounded-lg">
             <div class="p-5">
@@ -105,7 +88,7 @@
                     </div>
                     <div class="ml-5 w-0 flex-1">
                         <dl>
-                            <dt class="text-sm font-medium text-gray-500 truncate">最大フォロー数</dt>
+                            <dt class="text-sm font-medium text-gray-500 truncate">フォロー数</dt>
                             <dd class="text-lg font-medium text-gray-900">{{ $stats && $stats->max_following ? number_format($stats->max_following) : '-' }}</dd>
                         </dl>
                     </div>
@@ -123,7 +106,7 @@
                     </div>
                     <div class="ml-5 w-0 flex-1">
                         <dl>
-                            <dt class="text-sm font-medium text-gray-500 truncate">最大リポジトリ数</dt>
+                            <dt class="text-sm font-medium text-gray-500 truncate">リポジトリ数</dt>
                             <dd class="text-lg font-medium text-gray-900">{{ $stats && $stats->max_repos ? number_format($stats->max_repos) : '-' }}</dd>
                         </dl>
                     </div>

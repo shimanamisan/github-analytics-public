@@ -12,8 +12,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('github_follower_details', function (Blueprint $table) {
-            $table->foreignId('user_id')->nullable()->after('id');
-            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+            if (!Schema::hasColumn('github_follower_details', 'user_id')) {
+                $table->foreignId('user_id')->nullable()->after('id');
+                $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+            }
         });
     }
 
