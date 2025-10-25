@@ -1,0 +1,34 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::table('login_failure_attempts', function (Blueprint $table) {
+            // Cookieベースの識別子を追加
+            $table->string('session_identifier', 64)->nullable()->after('ip_address');
+            $table->index('session_identifier');
+            
+            // ip_addressをnullableに変更（参考情報として残す）
+            $table->string('ip_address', 45)->nullable()->change();
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::table('login_failure_attempts', function (Blueprint $table) {
+            $table->dropIndex(['session_identifier']);
+            $table->dropColumn('session_identifier');
+        });
+    }
+};

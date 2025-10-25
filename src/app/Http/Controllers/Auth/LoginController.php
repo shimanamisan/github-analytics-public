@@ -3,8 +3,11 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\LoginFailureAttempt;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cookie;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
@@ -23,12 +26,32 @@ class LoginController extends Controller
      * ログイン画面を表示
      * 
      * ユーザーがログイン情報を入力できるフォーム画面を表示します。
+     * Cookieベースで失敗回数を判定します。
      * 
+     * @param \Illuminate\Http\Request $request HTTPリクエストインスタンス
      * @return \Illuminate\View\View ログインフォームのビュー
      */
-    public function showLoginForm(): View
+    public function showLoginForm(Request $request): View
     {
-        return view('auth.login');
+        // Cookieからセッション識別子を取得（なければ新規作成）
+        $sessionIdentifier = $request->cookie('login_attempt_token');
+        
+        if (!$sessionIdentifier) {
+            $sessionIdentifier = Str::random(40);
+            Cookie::queue('login_attempt_token', $sessionIdentifier, 60 * 24); // 24時間有効
+        }
+        
+        // セッション識別子で失敗記録を取得
+        $failureAttempt = LoginFailureAttempt::getBySessionIdentifier($sessionIdentifier);
+        
+        // 5回失敗達成フラグをビューに渡す
+        $isFiveStrikes = $failureAttempt && $failureAttempt->is_five_strikes;
+        $consecutiveFailures = $failureAttempt ? $failureAttempt->consecutive_failures : 0;
+        
+        return view('auth.login', [
+            'isFiveStrikes' => $isFiveStrikes,
+            'consecutiveFailures' => $consecutiveFailures,
+        ]);
     }
 
     /**
@@ -59,6 +82,15 @@ class LoginController extends Controller
 
         $credentials = $request->only('email', 'password');
         $remember = $request->boolean('remember');
+        $ipAddress = $request->ip();
+        
+        // Cookieからセッション識別子を取得（なければ新規作成）
+        $sessionIdentifier = $request->cookie('login_attempt_token');
+        
+        if (!$sessionIdentifier) {
+            $sessionIdentifier = Str::random(40);
+            Cookie::queue('login_attempt_token', $sessionIdentifier, 60 * 24); // 24時間有効
+        }
 
         // ユーザーの有効状態をチェック
         $user = \App\Models\User::where('email', $credentials['email'])->first();
@@ -82,13 +114,65 @@ class LoginController extends Controller
                 ]);
             }
             
+            // ログイン成功：失敗記録とCookieをクリア
+            LoginFailureAttempt::resetAttemptsBySession($sessionIdentifier);
+            Cookie::queue(Cookie::forget('login_attempt_token'));
+            
             $request->session()->regenerate();
             return redirect()->intended(route('admin.dashboard'));
         }
 
+        // ログイン失敗：失敗回数を記録
+        $this->recordLoginFailure($sessionIdentifier, $ipAddress, $credentials['email']);
+
         throw ValidationException::withMessages([
             'email' => 'ログイン情報が正しくありません。',
         ]);
+    }
+    
+    /**
+     * ログイン失敗を記録
+     * 
+     * Cookieのセッション識別子ごとに失敗回数をカウントし、5回目の失敗で特別フラグを立てます。
+     * IPアドレスは参考情報として記録されます。
+     * 
+     * @param string $sessionIdentifier Cookieのセッション識別子
+     * @param string $ipAddress 失敗したリクエストのIPアドレス（参考情報）
+     * @param string $email 試行されたメールアドレス
+     * @return void
+     */
+    private function recordLoginFailure(string $sessionIdentifier, string $ipAddress, string $email): void
+    {
+        // 既存の記録を取得
+        $attempt = LoginFailureAttempt::getBySessionIdentifier($sessionIdentifier);
+        
+        if ($attempt) {
+            // 既存の記録を更新
+            $attempt->consecutive_failures++;
+            $attempt->email = $email;
+            $attempt->ip_address = $ipAddress; // 参考情報として更新
+            $attempt->last_attempt_at = now();
+            
+            // 5回目の失敗でフラグを立てる
+            if ($attempt->consecutive_failures >= 5) {
+                $attempt->is_five_strikes = true;
+            }
+            
+            $attempt->save();
+        } else {
+            // 新規記録を作成
+            LoginFailureAttempt::create([
+                'session_identifier' => $sessionIdentifier,
+                'ip_address' => $ipAddress,
+                'email' => $email,
+                'consecutive_failures' => 1,
+                'last_attempt_at' => now(),
+                'is_five_strikes' => false,
+            ]);
+        }
+        
+        // 古い記録を削除（24時間以上前）
+        LoginFailureAttempt::cleanupOldAttempts();
     }
 
     /**
