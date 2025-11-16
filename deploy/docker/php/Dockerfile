@@ -36,6 +36,13 @@ RUN composer install --no-dev --optimize-autoloader --no-interaction
 # PHP-FPM設定ファイルをコピー（Unixソケット用）
 COPY deploy/docker/php/php-fpm.conf /usr/local/etc/php-fpm.d/zzz-www.conf
 
+# エントリーポイントスクリプトをコピー
+COPY deploy/docker/php/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
+# su-execをインストール（Alpine Linuxでユーザー切り替え用）
+RUN apk add --no-cache su-exec
+
 # PHP-FPMソケット用ディレクトリ作成
 RUN mkdir -p /var/run/php-fpm \
   && chown -R www-data:www-data /var/run/php-fpm
@@ -50,6 +57,6 @@ RUN mkdir -p storage/logs storage/framework/cache storage/framework/sessions sto
   && chmod -R 775 storage bootstrap/cache \
   && chmod g+s storage/logs
 
-USER www-data
-
-CMD ["php-fpm"]
+# エントリーポイントを設定（rootで実行してからwww-dataに切り替え）
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
+CMD ["-F"]
