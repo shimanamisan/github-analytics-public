@@ -43,8 +43,13 @@ RUN mkdir -p /var/run/php-fpm \
 # 既存のキャッシュを削除（実行時に再生成）
 RUN rm -rf bootstrap/cache/*.php
 
-# 権限設定
-RUN chown -R www-data:www-data /var/www/html
+# storageとbootstrap/cacheディレクトリを明示的に作成し、権限を設定
+RUN mkdir -p storage/logs storage/framework/cache storage/framework/sessions storage/framework/views \
+  && mkdir -p bootstrap/cache \
+  && chown -R www-data:www-data /var/www/html \
+  && chmod -R 775 storage bootstrap/cache \
+  && chmod g+s storage/logs
+
 USER www-data
 
 CMD ["php-fpm"]
