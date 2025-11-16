@@ -11,6 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // テーブルが既に存在する場合はスキップ（前回のデプロイで作成済みの可能性がある）
+        if (Schema::hasTable('login_failure_attempts')) {
+            return;
+        }
+
         Schema::create('login_failure_attempts', function (Blueprint $table) {
             $table->id();
             $table->string('ip_address', 45); // IPv6対応のため45文字
