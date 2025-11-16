@@ -8,12 +8,13 @@ COPY src ./src
 RUN cd ./src && npm run build
 
 # PHP基本ステージ
-FROM php:8.2-fpm AS base
-ENV TZ=Asia/Tokyo LANG=ja_JP.UTF-8 LC_ALL=ja_JP.UTF-8
-RUN apt-get update \
-  && apt-get -y install git libicu-dev libonig-dev libzip-dev unzip locales tzdata \
-  && apt-get clean && rm -rf /var/lib/apt/lists/* \
-  && locale-gen ja_JP.UTF-8 && localedef -f UTF-8 -i ja_JP ja_JP.UTF-8 \
+FROM php:8.2.29-fpm-alpine AS base
+ENV TZ=Asia/Tokyo
+RUN apk add --no-cache \
+    # ビルドツール（PHP拡張コンパイルに必要）
+    autoconf g++ make linux-headers \
+    # ランタイムライブラリ
+    git icu-dev icu-libs oniguruma-dev libzip-dev unzip tzdata \
   && docker-php-ext-install intl pdo_mysql mbstring zip bcmath \
   && pecl install redis \
   && docker-php-ext-enable redis
