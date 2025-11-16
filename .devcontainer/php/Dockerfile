@@ -1,4 +1,4 @@
-FROM php:8.2.29-fpm
+FROM php:8.2.29-fpm-alpine
 
 # Composer Install
 # 公式の Composer イメージを利用
@@ -9,19 +9,14 @@ ENV COMPOSER_ALLOW_SUPERUSER 1
 ENV COMPOSER_HOME /composer
 # コマンドが実行できるようにパスを通す
 ENV PATH $PATH:/composer/vendor/bin
-# ロケールを日本に設定
-ENV LANG ja_JP.UTF-8
-ENV LC_ALL ja_JP.UTF-8
 # タイムゾーンを日本に設定
 ENV TZ Asia/Tokyo
 
-RUN apt-get update && \
-  # 必要なパッケージをインストール（supervisorは不要：PHP-FPMを直接起動）
-  apt-get -y install git libicu-dev libonig-dev libzip-dev unzip locales tzdata && \
-  apt-get clean && \
-  rm -rf /var/lib/apt/lists/* && \
-  locale-gen ja_JP.UTF-8 && \
-  localedef -f UTF-8 -i ja_JP ja_JP.UTF-8 && \
+RUN apk add --no-cache \
+    # ビルドツール（PHP拡張コンパイルに必要）
+    autoconf g++ make linux-headers \
+    # ランタイムライブラリ
+    git icu-dev icu-libs oniguruma-dev libzip-dev unzip tzdata bash shadow && \
   mkdir /var/run/php-fpm && \
   mkdir /var/log/php && \
   docker-php-ext-install intl pdo_mysql mbstring zip bcmath && \
@@ -37,7 +32,7 @@ COPY ./shell/fix-laravel-permissions.sh /usr/local/bin/fix-laravel-permissions.s
 
 WORKDIR /workspace
 
-RUN useradd -m -s /bin/bash h-nishihara && \
+RUN adduser -D -s /bin/bash h-nishihara && \
     # Xebugで使用するログファイルの作成とファイルへのアクセス権限を付与する
     touch /var/log/xdebug.log && \
     chown h-nishihara:h-nishihara /var/log/xdebug.log && \
@@ -47,9 +42,8 @@ RUN useradd -m -s /bin/bash h-nishihara && \
     chmod +x /usr/local/bin/docker-entrypoint.sh && \
     chown h-nishihara:h-nishihara /usr/local/bin/fix-laravel-permissions.sh && \
     chmod +x /usr/local/bin/fix-laravel-permissions.sh && \
-
     # h-nishiharaユーザーをwww-dataグループに追加
-    usermod -a -G www-data h-nishihara
+    addgroup h-nishihara www-data
     
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 # PHP-FPMを直接起動（フォアグラウンドモード）
