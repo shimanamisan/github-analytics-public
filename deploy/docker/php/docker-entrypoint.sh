@@ -22,6 +22,6 @@ if [ -d "/var/www/html/storage" ]; then
     echo "Storage permissions set successfully"
 fi
 
-# www-dataユーザーに切り替えてPHP-FPMを起動
-exec su-exec www-data php-fpm "$@"
+# PHP-FPMをrootで起動（ワーカープロセスは設定ファイルでwww-dataに設定）
+exec php-fpm "$@"
 
