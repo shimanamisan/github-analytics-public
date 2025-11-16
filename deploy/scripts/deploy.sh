@@ -3,6 +3,17 @@
 ###############################################################################
 # GitHub Traffic API - Production Deployment Script
 ###############################################################################
+# このスクリプトは本番環境へのデプロイを自動化します。
+# 主な処理内容:
+# 1. デプロイディレクトリの準備とdocker-compose.ymlのコピー
+# 2. GitHub Container Registryへのログイン
+# 3. 最新のDockerイメージの取得
+# 4. 既存コンテナの停止と新規コンテナの起動
+# 5. サービスヘルスチェック待機
+# 6. データベース接続確認とマイグレーション実行
+# 7. 管理者ユーザーの作成（シーダー実行）
+# 8. Laravelキャッシュの最適化
+# 9. 古いDockerイメージのクリーンアップ
 
 set -e  # エラーで停止
 
@@ -30,6 +41,9 @@ log_error() {
     echo -e "${RED}[ERROR]${NC} $1"
 }
 
+# ============================================================================
+# 1. デプロイディレクトリの準備
+# ============================================================================
 # デプロイディレクトリへ移動
 DEPLOY_DIR="/home/$(whoami)/deploy/github-traffic-api"
 COMPOSE_FILE="$DEPLOY_DIR/docker-compose.yml"
@@ -57,6 +71,9 @@ fi
 # 現在のディレクトリを変更
 cd "$DEPLOY_DIR"
 
+# ============================================================================
+# 2. GitHub Container Registryへのログイン
+# ============================================================================
 # GitHub Container Registryにログイン
 log_info "Logging in to GitHub Container Registry..."
 if [ -n "$GHCR_TOKEN" ]; then
@@ -66,10 +83,16 @@ else
     log_warning "GHCR_TOKEN not set. Attempting to use cached credentials..."
 fi
 
+# ============================================================================
+# 3. 最新のDockerイメージの取得
+# ============================================================================
 # 最新のイメージをPull
 log_info "Pulling latest Docker images from registry..."
 docker compose pull
 
+# ============================================================================
+# 4. 既存コンテナの停止と新規コンテナの起動
+# ============================================================================
 # コンテナの停止と削除（データベースボリュームは保持）
 log_info "Stopping existing containers..."
 docker compose down --remove-orphans
@@ -78,6 +101,9 @@ docker compose down --remove-orphans
 log_info "Starting containers..."
 docker compose up -d
 
+# ============================================================================
+# 5. サービスヘルスチェック待機
+# ============================================================================
 # ヘルスチェック待機
 log_info "Waiting for services to be healthy..."
 MAX_WAIT=60
@@ -108,6 +134,9 @@ fi
 log_info "Clearing configuration cache..."
 docker compose exec -T app php artisan config:clear || true
 
+# ============================================================================
+# 6. データベース接続確認
+# ============================================================================
 # データベース接続確認（追加の安全チェック）
 log_info "Verifying database connection..."
 MAX_DB_RETRIES=15
@@ -141,6 +170,9 @@ while [ $DB_RETRY_COUNT -lt $MAX_DB_RETRIES ]; do
     fi
 done
 
+# ============================================================================
+# 7. データベースマイグレーション実行
+# ============================================================================
 # データベースマイグレーション実行
 log_info "Running database migrations..."
 if docker compose exec -T app php artisan migrate --force; then
@@ -152,6 +184,9 @@ else
     exit 1
 fi
 
+# ============================================================================
+# 8. 管理者ユーザーの作成（シーダー実行）
+# ============================================================================
 # 管理者ユーザーの作成（初回デプロイ時 or 未作成時）
 log_info "Running AdminUserSeeder..."
 if docker compose exec -T app php artisan db:seed --class=AdminUserSeeder --force; then
@@ -163,6 +198,9 @@ else
     exit 1
 fi
 
+# ============================================================================
+# 9. Laravelキャッシュの最適化
+# ============================================================================
 # キャッシュクリア＆最適化
 log_info "Clearing and optimizing caches..."
 docker compose exec -T app php artisan config:cache
@@ -181,6 +219,9 @@ docker compose logs --tail=20
 log_success "Deployment completed successfully at $(date '+%Y-%m-%d %H:%M:%S')"
 log_info "Application is running at the configured domain"
 
+# ============================================================================
+# 10. 古いDockerイメージのクリーンアップ
+# ============================================================================
 # クリーンアップ（古いイメージの削除）
 log_info "Cleaning up old Docker images..."
 docker image prune -f
