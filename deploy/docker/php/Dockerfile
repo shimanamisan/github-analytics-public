@@ -40,9 +40,6 @@ COPY deploy/docker/php/php-fpm.conf /usr/local/etc/php-fpm.d/zzz-www.conf
 COPY deploy/docker/php/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
-# su-execをインストール（Alpine Linuxでユーザー切り替え用）
-RUN apk add --no-cache su-exec
-
 # PHP-FPMソケット用ディレクトリ作成
 RUN mkdir -p /var/run/php-fpm \
   && chown -R www-data:www-data /var/run/php-fpm
