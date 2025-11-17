@@ -177,7 +177,7 @@
     <text x="70" y="470" font-size="12" fill="#374151">• <tspan font-weight="bold">フレームワーク:</tspan> Laravel (PHP)</text>
     <text x="70" y="490" font-size="12" fill="#374151">• <tspan font-weight="bold">データベース:</tspan> MySQL</text>
     <text x="70" y="510" font-size="12" fill="#374151">• <tspan font-weight="bold">スケジューラー:</tspan> Cron + Laravel Task Scheduler</text>
-    <text x="70" y="530" font-size="12" fill="#374151">• <tspan font-weight="bold">API:</tspan> GitHub Traffic API</text>
+    <text x="70" y="530" font-size="12" fill="#374151">• <tspan font-weight="bold">API:</tspan> GitHub Analytics API</text>
     <text x="70" y="550" font-size="12" fill="#374151">• <tspan font-weight="bold">認証:</tspan> Personal Access Token</text>
     <text x="70" y="570" font-size="12" fill="#374151">• <tspan font-weight="bold">UI:</tspan> Livewire + Blade</text>
     <text x="70" y="590" font-size="12" fill="#374151">• <tspan font-weight="bold">管理機能:</tspan> 認証付き管理画面</text>

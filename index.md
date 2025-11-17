@@ -125,7 +125,7 @@ ssh ユーザー名@本番サーバー
 
 #### 2. バックアップファイル一覧を確認
 ```bash
-docker exec github-traffic-api-backend ls -lh /var/www/html/storage/backups/database/
+docker exec github-analytics-backend ls -lh /var/www/html/storage/backups/database/
 ```
 
 出力例：
@@ -136,7 +136,7 @@ docker exec github-traffic-api-backend ls -lh /var/www/html/storage/backups/data
 
 #### 3. 取得したいファイルをホームディレクトリにコピー
 ```bash
-docker cp github-traffic-api-backend:/var/www/html/storage/backups/database/backup_2025-10-12_02-00-00.sql.gz ~/
+docker cp github-analytics-backend:/var/www/html/storage/backups/database/backup_2025-10-12_02-00-00.sql.gz ~/
 ```
 
 #### 4. ローカルマシンに転送（ローカルマシンから実行）
@@ -150,15 +150,15 @@ scp ユーザー名@本番サーバー:~/backup_2025-10-12_02-00-00.sql.gz ./
 
 ```bash
 # ローカルマシンから実行
-ssh ユーザー名@本番サーバー "docker exec github-traffic-api-backend cat /var/www/html/storage/backups/database/backup_2025-10-12_02-00-00.sql.gz" > backup_2025-10-12_02-00-00.sql.gz
+ssh ユーザー名@本番サーバー "docker exec github-analytics-backend cat /var/www/html/storage/backups/database/backup_2025-10-12_02-00-00.sql.gz" > backup_2025-10-12_02-00-00.sql.gz
 ```
 
 ### 最新のバックアップを自動取得
 
 ```bash
 # 本番サーバーで実行
-LATEST_BACKUP=$(docker exec github-traffic-api-backend ls -t /var/www/html/storage/backups/database/ | head -1)
-docker cp github-traffic-api-backend:/var/www/html/storage/backups/database/$LATEST_BACKUP ~/
+LATEST_BACKUP=$(docker exec github-analytics-backend ls -t /var/www/html/storage/backups/database/ | head -1)
+docker cp github-analytics-backend:/var/www/html/storage/backups/database/$LATEST_BACKUP ~/
 
 # ローカルマシンに転送
 scp ユーザー名@本番サーバー:~/$LATEST_BACKUP ./
@@ -178,7 +178,7 @@ scp ユーザー名@本番サーバー:~/$LATEST_BACKUP ./
 gunzip < backup_2025-10-12_02-00-00.sql.gz | mysql -u ユーザー名 -p
 
 # または Docker経由でリストア
-gunzip < backup_2025-10-12_02-00-00.sql.gz | docker exec -i github-traffic-api-db mysql -u ユーザー名 -p パスワード
+gunzip < backup_2025-10-12_02-00-00.sql.gz | docker exec -i github-analytics-db mysql -u ユーザー名 -p パスワード
 ```
 
 ### バックアップの作成
@@ -187,7 +187,7 @@ gunzip < backup_2025-10-12_02-00-00.sql.gz | docker exec -i github-traffic-api-d
 
 ```bash
 # 本番サーバーで実行
-docker exec github-traffic-api-backend php artisan db:backup --format=gz
+docker exec github-analytics-backend php artisan db:backup --format=gz
 ```
 
 ### 注意事項

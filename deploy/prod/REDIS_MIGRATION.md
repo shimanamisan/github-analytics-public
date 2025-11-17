@@ -46,7 +46,7 @@ docker compose up -d redis
 ```bash
 # Redis接続設定
 REDIS_CLIENT=phpredis
-REDIS_HOST=github-traffic-api-redis  # 開発環境のコンテナ名
+REDIS_HOST=github-analytics-redis  # 開発環境のコンテナ名
 REDIS_PASSWORD=null                   # 開発環境ではパスワードなし
 REDIS_PORT=6379
 
@@ -106,7 +106,7 @@ php artisan tinker
 2. **バックアップ取得**
    ```bash
    # データベースバックアップ
-   cd ~/deploy/github-traffic-api
+   cd ~/deploy/github-analytics
    docker compose exec db mysqldump -u root -p github_traffic_api > backup_before_redis_$(date +%Y%m%d).sql
    ```
 
@@ -115,14 +115,14 @@ php artisan tinker
 #### 1. メンテナンスモード有効化
 
 ```bash
-cd ~/deploy/github-traffic-api
+cd ~/deploy/github-analytics
 docker compose exec app php artisan down --render="errors::503" --retry=60
 ```
 
 #### 2. .env ファイルの更新
 
 ```bash
-cd ~/deploy/github-traffic-api
+cd ~/deploy/github-analytics
 nano .env
 ```
 
@@ -392,7 +392,7 @@ docker compose exec redis redis-cli -a YOUR_REDIS_PASSWORD DBSIZE
    ```bash
    # Redisデータのバックアップ
    docker compose exec redis redis-cli -a YOUR_REDIS_PASSWORD SAVE
-   docker cp github-traffic-api-redis:/data/dump.rdb ./redis_backup_$(date +%Y%m%d).rdb
+   docker cp github-analytics-redis:/data/dump.rdb ./redis_backup_$(date +%Y%m%d).rdb
    ```
 
 ---

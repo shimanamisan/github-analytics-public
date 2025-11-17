@@ -1,13 +1,13 @@
 # コンテナ名
-name: github-traffic-api
+name: github-analytics
 
 volumes:
   db-store:
-    name: github-traffic-api_db
+    name: github-analytics_db
   php-fpm-socket:
-    name: github-traffic-api_php-fpm-socket
+    name: github-analytics_php-fpm-socket
   redis-data:
-    name: github-traffic-api_redis
+    name: github-analytics_redis
 
 # 共有ネットワークに接続
 networks:
@@ -17,11 +17,11 @@ networks:
 services:
 
   app:
-    container_name: github-traffic-api-backend
+    container_name: github-analytics-backend
     build:
       context: ./php
       dockerfile: ./Dockerfile
-    image: github-traffic-api-backend:1.0
+    image: github-analytics-backend:1.0
     volumes:
       - php-fpm-socket:/var/run/php-fpm
       - ../:/workspace:cached
@@ -32,8 +32,8 @@ services:
     build:
       context: ./nginx
       dockerfile: ./Dockerfile
-    container_name: github-traffic-api-web
-    image: github-traffic-api-web:1.0
+    container_name: github-analytics-web
+    image: github-analytics-web:1.0
     volumes:
       - php-fpm-socket:/var/run/php-fpm
       - ../:/workspace:cached
@@ -45,11 +45,11 @@ services:
       - nginx-proxy-manager-network
 
   db:
-    container_name: github-traffic-api-db
+    container_name: github-analytics-db
     build:
       context: ./mysql
       dockerfile: ./Dockerfile
-    image: github-traffic-api-db:1.0
+    image: github-analytics-db:1.0
     volumes:
       - db-store:/var/lib/mysql
     ports:
@@ -64,7 +64,7 @@ services:
       - nginx-proxy-manager-network
 
   redis:
-    container_name: github-traffic-api-redis
+    container_name: github-analytics-redis
     image: redis:7-alpine
     volumes:
       - redis-data:/data
@@ -81,11 +81,11 @@ services:
       - nginx-proxy-manager-network
 
   node:
-    container_name: github-traffic-api-node
+    container_name: github-analytics-node
     build:
       context: ./node
       dockerfile: ./Dockerfile
-    image: github-traffic-api-node:1.0
+    image: github-analytics-node:1.0
     working_dir: "/workspace/src"
     command: /bin/sh -c 'npm install && npm run dev'
     ports:
@@ -100,8 +100,8 @@ services:
 
   # Laravel Scheduler（開発環境）
   scheduler:
-    container_name: github-traffic-api-scheduler
-    image: github-traffic-api-backend:1.0
+    container_name: github-analytics-scheduler
+    image: github-analytics-backend:1.0
     working_dir: /workspace/src
     # ENTRYPOINTをスキップして直接コマンドを実行
     entrypoint: []
@@ -123,11 +123,11 @@ services:
       - nginx-proxy-manager-network
 
   phpmyadmin:
-    container_name: github-traffic-api-phpmyadmin
+    container_name: github-analytics-phpmyadmin
     build:
       context: ./phpmyadmin
       dockerfile: ./Dockerfile
-    image: github-traffic-api-phpmyadmin:1.0
+    image: github-analytics-phpmyadmin:1.0
     ports:
       - 8091:80
     depends_on:

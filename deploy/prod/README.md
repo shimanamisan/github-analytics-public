@@ -68,8 +68,8 @@ git push origin main
 
 ```bash
 # 本番サーバーでデプロイディレクトリ作成
-mkdir -p ~/deploy/github-traffic-api
-cd ~/deploy/github-traffic-api
+mkdir -p ~/deploy/github-analytics
+cd ~/deploy/github-analytics
 
 # テンプレートから.envを作成
 # （リポジトリからコピーするか、手動で作成）
@@ -78,7 +78,7 @@ nano .env
 
 **必須設定項目**:
 ```bash
-REGISTRY_URL=ghcr.io/YOUR_GITHUB_USERNAME/github-traffic-api-laravel
+REGISTRY_URL=ghcr.io/YOUR_GITHUB_USERNAME/github-analytics-laravel
 IMAGE_TAG=latest
 
 MYSQL_PASSWORD=your_secure_password
@@ -113,7 +113,7 @@ GitHub Actionsで手動実行するか、`main`ブランチにpushして自動�
 
 **手動での確認**:
 ```bash
-cd ~/deploy/github-traffic-api
+cd ~/deploy/github-analytics
 
 # イメージをpull
 docker compose pull
@@ -162,7 +162,7 @@ docker compose logs -f
 ### ログ確認
 
 ```bash
-cd ~/deploy/github-traffic-api
+cd ~/deploy/github-analytics
 
 # 全サービスのログ
 docker compose logs -f
@@ -202,7 +202,7 @@ docker compose exec -T db mysql -u root -p github_traffic_api < backup_20250101.
 GitHub Actionsを使わず手動でデプロイする場合：
 
 ```bash
-cd ~/deploy/github-traffic-api
+cd ~/deploy/github-analytics
 
 # 最新イメージをpull
 docker compose pull

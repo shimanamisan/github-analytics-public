@@ -144,8 +144,8 @@ mkdir ~/actions-runner && cd ~/actions-runner
 #### 3. 本番環境の .env ファイル作成
 
 ```bash
-mkdir -p ~/deploy/github-traffic-api
-cd ~/deploy/github-traffic-api
+mkdir -p ~/deploy/github-analytics
+cd ~/deploy/github-analytics
 cp /path/to/repo/deploy/prod/env.template .env
 nano .env  # 設定を編集
 ```
@@ -160,7 +160,7 @@ echo YOUR_PAT_TOKEN | docker login ghcr.io -u YOUR_USERNAME --password-stdin
 # → GitHub Actionsを手動実行してイメージをビルド
 
 # docker-compose.yml を配置
-curl -o docker-compose.yml https://raw.githubusercontent.com/YOUR_USERNAME/GitHub-Traffic-API-Laravel/main/deploy/prod/docker-compose.yml
+curl -o docker-compose.yml https://raw.githubusercontent.com/YOUR_USERNAME/github-analytics-laravel/main/deploy/prod/docker-compose.yml
 
 # 起動
 docker compose up -d
@@ -180,7 +180,7 @@ docker compose logs -f
 
 ```bash
 # GitHub Container Registry
-REGISTRY_URL=ghcr.io/YOUR_GITHUB_USERNAME/github-traffic-api-laravel  # ← 変更
+REGISTRY_URL=ghcr.io/YOUR_GITHUB_USERNAME/github-analytics-laravel  # ← 変更
 
 # MySQL（強力なパスワード）
 MYSQL_PASSWORD=your_secure_password_here  # ← 変更
