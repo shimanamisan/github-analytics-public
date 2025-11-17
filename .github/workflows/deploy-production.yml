@@ -113,7 +113,7 @@ jobs:
         env:
           PRODUCTION_ENV: ${{ secrets.PRODUCTION_ENV }}
         run: |
-          DEPLOY_DIR="/home/$(whoami)/deploy/github-traffic-api"
+          DEPLOY_DIR="/home/$(whoami)/deploy/github-analytics"
           mkdir -p "$DEPLOY_DIR"
 
           # .envファイルをbase64デコードして配置
