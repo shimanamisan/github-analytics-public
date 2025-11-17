@@ -77,7 +77,7 @@ curl -o actions-runner-linux-x64-2.321.0.tar.gz -L \
 tar xzf ./actions-runner-linux-x64-2.321.0.tar.gz
 
 # 設定（GitHubの画面に表示されるトークンを使用）
-./config.sh --url https://github.com/YOUR_USERNAME/GitHub-Traffic-API-Laravel \
+./config.sh --url https://github.com/YOUR_USERNAME/github-analytics-laravel \
   --token YOUR_RUNNER_TOKEN_FROM_GITHUB
 
 # サービスとして登録（自動起動設定）
@@ -152,7 +152,7 @@ version: '3.8'
 services:
   app:
     image: ${REGISTRY_URL}/app:${IMAGE_TAG:-latest}
-    container_name: github-traffic-api-app
+    container_name: github-analytics-app
     restart: unless-stopped
     environment:
       - APP_ENV=production
@@ -184,7 +184,7 @@ services:
   # スケジューラー（Redisなしでも動作）
   scheduler:
     image: ${REGISTRY_URL}/app:${IMAGE_TAG:-latest}
-    container_name: github-traffic-api-scheduler
+    container_name: github-analytics-scheduler
     restart: unless-stopped
     command: php artisan schedule:work
     environment:
@@ -202,7 +202,7 @@ services:
   # ワーカー（データベースキューを使用）
   worker:
     image: ${REGISTRY_URL}/app:${IMAGE_TAG:-latest}
-    container_name: github-traffic-api-worker
+    container_name: github-analytics-worker
     restart: unless-stopped
     command: php artisan queue:work database --sleep=3 --tries=3
     environment:

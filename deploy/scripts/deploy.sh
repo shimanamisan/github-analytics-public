@@ -1,7 +1,7 @@
 #!/bin/bash
 
 ###############################################################################
-# GitHub Traffic API - Production Deployment Script
+# GitHub Analytics - Production Deployment Script
 ###############################################################################
 # このスクリプトは本番環境へのデプロイを自動化します。
 # 主な処理内容:
@@ -45,7 +45,7 @@ log_error() {
 # 1. デプロイディレクトリの準備
 # ============================================================================
 # デプロイディレクトリへ移動
-DEPLOY_DIR="/home/$(whoami)/deploy/github-traffic-api"
+DEPLOY_DIR="/home/$(whoami)/deploy/github-analytics"
 COMPOSE_FILE="$DEPLOY_DIR/docker-compose.yml"
 
 log_info "Deployment started at $(date '+%Y-%m-%d %H:%M:%S')"

@@ -1,4 +1,4 @@
-# GitHub-Traffic-API-Laravel
+# GitHub Analytics Laravel
 
 # 構成図
 

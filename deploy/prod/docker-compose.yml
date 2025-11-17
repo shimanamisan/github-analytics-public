@@ -1,12 +1,12 @@
 volumes:
   db-store:
-    name: github-traffic-api_db
+    name: github-analytics_db
   php-fpm-socket:
-    name: github-traffic-api_php-fpm-socket
+    name: github-analytics_php-fpm-socket
   app-storage:
-    name: github-traffic-api_app-storage
+    name: github-analytics_app-storage
   redis-data:
-    name: github-traffic-api_redis
+    name: github-analytics_redis
 
 networks:
   nginx-proxy-manager-network:
@@ -14,7 +14,7 @@ networks:
 
 services:
   app:
-    container_name: github-traffic-api-backend
+    container_name: github-analytics-backend
     image: ${REGISTRY_URL}/app:${IMAGE_TAG:-latest}
     environment:
       APP_ENV: production
@@ -40,7 +40,7 @@ services:
       - nginx-proxy-manager-network
 
   web:
-    container_name: github-traffic-api-web
+    container_name: github-analytics-web
     image: ${REGISTRY_URL}/web:${IMAGE_TAG:-latest}
     depends_on:
       - app
@@ -58,7 +58,7 @@ services:
       - nginx-proxy-manager-network
 
   db:
-    container_name: github-traffic-api-db
+    container_name: github-analytics-db
     image: ${REGISTRY_URL}/db:${IMAGE_TAG:-latest}
     volumes:
       - db-store:/var/lib/mysql
@@ -80,7 +80,7 @@ services:
       - nginx-proxy-manager-network
 
   redis:
-    container_name: github-traffic-api-redis
+    container_name: github-analytics-redis
     image: redis:7-alpine
     volumes:
       - redis-data:/data
@@ -96,7 +96,7 @@ services:
 
   # Laravel Scheduler（Cronジョブ実行）
   scheduler:
-    container_name: github-traffic-api-scheduler
+    container_name: github-analytics-scheduler
     image: ${REGISTRY_URL}/app:${IMAGE_TAG:-latest}
     command: php artisan schedule:work
     environment:
@@ -120,7 +120,7 @@ services:
   # ローカルホストからのみアクセス可能
   phpmyadmin:
     image: phpmyadmin:latest
-    container_name: github-traffic-api-phpmyadmin
+    container_name: github-analytics-phpmyadmin
     ports:
       - "8091:80"
     environment:

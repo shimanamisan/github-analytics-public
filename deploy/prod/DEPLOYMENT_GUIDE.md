@@ -129,7 +129,7 @@ curl -o actions-runner-linux-x64-2.321.0.tar.gz -L \
 tar xzf ./actions-runner-linux-x64-2.321.0.tar.gz
 
 # 設定（トークンはGitHubの画面から取得）
-./config.sh --url https://github.com/YOUR_USERNAME/GitHub-Traffic-API-Laravel \
+./config.sh --url https://github.com/YOUR_USERNAME/github-analytics-laravel \
   --token YOUR_RUNNER_TOKEN_FROM_GITHUB \
   --name production-server \
   --labels self-hosted,linux,x64,production
@@ -172,8 +172,8 @@ docker network create nginx-proxy-manager-network
 
 ```bash
 # デプロイ用ディレクトリ作成
-mkdir -p ~/deploy/github-traffic-api
-cd ~/deploy/github-traffic-api
+mkdir -p ~/deploy/github-analytics
+cd ~/deploy/github-analytics
 ```
 
 ### 2. 環境変数ファイルの作成
@@ -181,7 +181,7 @@ cd ~/deploy/github-traffic-api
 ```bash
 # env.template を参考に .env を作成
 # （リポジトリから手動でコピーするか、以下のコマンドで取得）
-curl -o .env https://raw.githubusercontent.com/YOUR_USERNAME/GitHub-Traffic-API-Laravel/main/deploy/prod/env.template
+curl -o .env https://raw.githubusercontent.com/YOUR_USERNAME/github-analytics-laravel/main/deploy/prod/env.template
 
 # .envファイルを編集
 nano .env
@@ -191,7 +191,7 @@ nano .env
 
 ```bash
 # GitHub Container Registry設定
-REGISTRY_URL=ghcr.io/YOUR_GITHUB_USERNAME/github-traffic-api-laravel
+REGISTRY_URL=ghcr.io/YOUR_GITHUB_USERNAME/github-analytics-laravel
 IMAGE_TAG=latest
 
 # MySQL設定（強力なパスワードに変更！）
@@ -204,7 +204,7 @@ MYSQL_ROOT_PASSWORD=your_secure_root_password_here_CHANGE_THIS
 REDIS_PASSWORD=your_redis_password_here_CHANGE_THIS
 
 # Laravel設定
-APP_NAME="GitHub Traffic API"
+APP_NAME="GitHub Analytics"
 APP_ENV=production
 APP_DEBUG=false
 APP_URL=https://your-domain.com
@@ -239,7 +239,7 @@ GITHUB_REPO=your_repo_name
 
 ```bash
 # 一時的にappコンテナを起動してAPP_KEYを生成
-docker run --rm ghcr.io/YOUR_USERNAME/github-traffic-api-laravel/app:latest \
+docker run --rm ghcr.io/YOUR_USERNAME/github-analytics-laravel/app:latest \
   php artisan key:generate --show
 
 # 出力された値を .env の APP_KEY に設定
@@ -255,10 +255,10 @@ echo YOUR_PERSONAL_ACCESS_TOKEN | docker login ghcr.io -u YOUR_GITHUB_USERNAME -
 ### 5. 手動での初回デプロイ（テスト）
 
 ```bash
-cd ~/deploy/github-traffic-api
+cd ~/deploy/github-analytics
 
 # docker-compose.yml を配置（リポジトリからコピー）
-curl -o docker-compose.yml https://raw.githubusercontent.com/YOUR_USERNAME/GitHub-Traffic-API-Laravel/main/deploy/prod/docker-compose.yml
+curl -o docker-compose.yml https://raw.githubusercontent.com/YOUR_USERNAME/github-analytics-laravel/main/deploy/prod/docker-compose.yml
 
 # イメージをPull
 docker compose pull
@@ -289,7 +289,7 @@ Nginx Proxy Managerの管理画面で：
 2. 以下を設定：
    - **Domain Names**: `your-domain.com`
    - **Scheme**: `http`
-   - **Forward Hostname/IP**: `github-traffic-api-web`
+   - **Forward Hostname/IP**: `github-analytics-web`
    - **Forward Port**: `80`
    - **SSL**: Let's Encryptで証明書を取得
 
@@ -326,7 +326,7 @@ GitHubの画面から手動実行も可能：
 ### ログ確認
 
 ```bash
-cd ~/deploy/github-traffic-api
+cd ~/deploy/github-analytics
 
 # 全サービスのログ
 docker compose logs -f
@@ -366,7 +366,7 @@ docker compose exec -T db mysql -u root -p github_traffic_api < backup_20250101.
 データベース管理用のGUIツールとしてphpMyAdminを利用できます。
 
 ```bash
-cd ~/deploy/github-traffic-api
+cd ~/deploy/github-analytics
 
 # phpMyAdminを起動（プロファイル指定が必要）
 docker compose --profile tools up -d phpmyadmin
@@ -451,7 +451,7 @@ cat .env | grep -E "(MYSQL_DATABASE|DB_DATABASE|MYSQL_USER|DB_USERNAME|MYSQL_PAS
 
 # 設定が異なる場合は修正して、古いボリュームを削除
 docker compose down
-docker volume rm github-traffic-api_db
+docker volume rm github-analytics_db
 docker compose up -d
 ```
 
