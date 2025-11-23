@@ -17,8 +17,8 @@
                 @auth
                     @if(auth()->user()->isAdmin())
                     <div>
-                        <label for="user_id" class="block text-sm font-medium text-gray-700 mb-2">ユーザー</label>
-                        <select name="user_id" id="user_id" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                        <label for="user_id" class="block text-sm font-medium text-gray-700 mb-1">ユーザー</label>
+                        <select name="user_id" id="user_id" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                             <option value="">すべて</option>
                             @foreach($users as $user)
                                 <option value="{{ $user->id }}" {{ request('user_id') == $user->id ? 'selected' : '' }}>
@@ -31,13 +31,13 @@
                 @endauth
                 
                 <div>
-                    <label for="start_date" class="block text-sm font-medium text-gray-700 mb-2">開始日</label>
-                    <input type="date" name="start_date" id="start_date" value="{{ request('start_date') }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                    <label for="start_date" class="block text-sm font-medium text-gray-700 mb-1">開始日</label>
+                    <input type="date" name="start_date" id="start_date" value="{{ request('start_date') }}" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                 </div>
                 
                 <div>
-                    <label for="end_date" class="block text-sm font-medium text-gray-700 mb-2">終了日</label>
-                    <input type="date" name="end_date" id="end_date" value="{{ request('end_date') }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                    <label for="end_date" class="block text-sm font-medium text-gray-700 mb-1">終了日</label>
+                    <input type="date" name="end_date" id="end_date" value="{{ request('end_date') }}" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                 </div>
                 
                 <div class="flex items-end space-x-2">
