@@ -138,9 +138,12 @@ docker compose exec -T app php artisan config:clear || true
 # 6. データベース接続確認
 # ============================================================================
 # データベース接続確認（追加の安全チェック）
+# 注意: 接続確認が失敗しても、マイグレーション処理は実行されます
 log_info "Verifying database connection..."
 MAX_DB_RETRIES=15
 DB_RETRY_COUNT=0
+DB_CONNECTION_OK=false
+
 while [ $DB_RETRY_COUNT -lt $MAX_DB_RETRIES ]; do
     DB_RETRY_COUNT=$((DB_RETRY_COUNT + 1))
 
@@ -149,20 +152,21 @@ while [ $DB_RETRY_COUNT -lt $MAX_DB_RETRIES ]; do
         log_info "Final connection attempt with detailed output..."
         if docker compose exec -T app php artisan db:show; then
             log_success "Database connection verified!"
+            DB_CONNECTION_OK=true
             break
         else
-            log_error "Could not establish database connection!"
+            log_warning "Could not establish database connection at this stage!"
+            log_info "This may be normal if MySQL is still initializing."
+            log_info "Will attempt to run migrations anyway..."
             log_info "Checking environment variables..."
             docker compose exec -T app env | grep -E "(DB_|MYSQL_)" | grep -v PASSWORD
-            log_info "Checking app container logs..."
-            docker compose logs --tail=50 app
-            log_info "Checking db container logs..."
-            docker compose logs --tail=30 db
-            exit 1
+            # 接続確認が失敗しても続行（exit 1を削除）
+            break
         fi
     else
         if docker compose exec -T app php artisan db:show > /dev/null 2>&1; then
             log_success "Database connection verified!"
+            DB_CONNECTION_OK=true
             break
         fi
         log_info "Database connection check... retry $DB_RETRY_COUNT/$MAX_DB_RETRIES"
@@ -170,19 +174,40 @@ while [ $DB_RETRY_COUNT -lt $MAX_DB_RETRIES ]; do
     fi
 done
 
+if [ "$DB_CONNECTION_OK" = false ]; then
+    log_warning "Database connection verification failed, but continuing with migration attempt..."
+fi
+
 # ============================================================================
 # 7. データベースマイグレーション実行
 # ============================================================================
-# データベースマイグレーション実行
+# データベースマイグレーション実行（接続確認が失敗した場合でも試行）
 log_info "Running database migrations..."
-if docker compose exec -T app php artisan migrate --force; then
-    log_success "Database migrations completed successfully"
-else
-    log_error "Database migrations failed!"
-    log_info "Checking app container logs..."
-    docker compose logs --tail=50 app
-    exit 1
-fi
+MAX_MIGRATION_RETRIES=10
+MIGRATION_RETRY_COUNT=0
+MIGRATION_SUCCESS=false
+
+while [ $MIGRATION_RETRY_COUNT -lt $MAX_MIGRATION_RETRIES ]; do
+    MIGRATION_RETRY_COUNT=$((MIGRATION_RETRY_COUNT + 1))
+    
+    if docker compose exec -T app php artisan migrate --force; then
+        log_success "Database migrations completed successfully"
+        MIGRATION_SUCCESS=true
+        break
+    else
+        if [ $MIGRATION_RETRY_COUNT -lt $MAX_MIGRATION_RETRIES ]; then
+            log_warning "Migration attempt $MIGRATION_RETRY_COUNT/$MAX_MIGRATION_RETRIES failed. Retrying..."
+            sleep 5
+        else
+            log_error "Database migrations failed after $MAX_MIGRATION_RETRIES attempts!"
+            log_info "Checking app container logs..."
+            docker compose logs --tail=50 app
+            log_info "Checking db container logs..."
+            docker compose logs --tail=30 db
+            exit 1
+        fi
+    fi
+done
 
 # ============================================================================
 # 8. 管理者ユーザーの作成（シーダー実行）
