@@ -12,8 +12,9 @@
 # 5. サービスヘルスチェック待機
 # 6. データベース接続確認とマイグレーション実行
 # 7. 管理者ユーザーの作成（シーダー実行）
-# 8. Laravelキャッシュの最適化
-# 9. 古いDockerイメージのクリーンアップ
+# 8. Livewireアセットの公開
+# 9. Laravelキャッシュの最適化
+# 10. 古いDockerイメージのクリーンアップ
 
 set -e  # エラーで停止
 
@@ -224,7 +225,18 @@ else
 fi
 
 # ============================================================================
-# 9. Laravelキャッシュの最適化
+# 9. Livewireアセットの公開
+# ============================================================================
+# Livewireの静的アセットを公開（JavaScriptファイルなど）
+log_info "Publishing Livewire assets..."
+if docker compose exec -T app php artisan livewire:publish --force; then
+    log_success "Livewire assets published successfully"
+else
+    log_warning "Failed to publish Livewire assets, but continuing..."
+fi
+
+# ============================================================================
+# 10. Laravelキャッシュの最適化
 # ============================================================================
 # キャッシュクリア＆最適化
 log_info "Clearing and optimizing caches..."
@@ -245,7 +257,7 @@ log_success "Deployment completed successfully at $(date '+%Y-%m-%d %H:%M:%S')"
 log_info "Application is running at the configured domain"
 
 # ============================================================================
-# 10. 古いDockerイメージのクリーンアップ
+# 11. 古いDockerイメージのクリーンアップ
 # ============================================================================
 # クリーンアップ（古いイメージの削除）
 log_info "Cleaning up old Docker images..."

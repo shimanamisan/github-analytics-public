@@ -5,6 +5,8 @@ volumes:
     name: github-analytics_php-fpm-socket
   app-storage:
     name: github-analytics_app-storage
+  app-public:
+    name: github-analytics_app-public
   redis-data:
     name: github-analytics_redis
 
@@ -25,6 +27,7 @@ services:
     volumes:
       - php-fpm-socket:/var/run/php-fpm
       - app-storage:/var/www/html/storage
+      - app-public:/var/www/html/public
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "php -v >/dev/null 2>&1 || exit 1"]
@@ -48,6 +51,7 @@ services:
       - "80"
     volumes:
       - php-fpm-socket:/var/run/php-fpm
+      - app-public:/var/www/html/public:ro
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost/ >/dev/null 2>&1 || exit 1"]
@@ -98,7 +102,8 @@ services:
   scheduler:
     container_name: github-analytics-scheduler
     image: ${REGISTRY_URL}/app:${IMAGE_TAG:-latest}
-    command: php artisan schedule:work
+    entrypoint: []
+    command: php artisan schedule:work --verbose
     environment:
       APP_ENV: production
       APP_DEBUG: "false"
