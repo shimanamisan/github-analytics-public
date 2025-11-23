@@ -2,10 +2,16 @@
 
 echo "=== Container Starting ==="
 
+# 現在のユーザーを確認
+CURRENT_USER=$(whoami)
+echo "Current user: $CURRENT_USER"
+
 # Laravel パーミッション修正
+# root所有のファイルも処理できるように、rootで実行することを前提とする
 if [ -f "/usr/local/bin/fix-laravel-permissions.sh" ]; then
     echo "Running Laravel permission fix..."
-    /usr/local/bin/fix-laravel-permissions.sh
+    # root所有のファイルも処理できるように、エラーを無視して続行
+    /usr/local/bin/fix-laravel-permissions.sh || echo "Warning: Some permission fixes may have failed"
 fi
 
 # artisan キャッシュクリア（check_artisan.shの処理を統合）
