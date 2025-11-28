@@ -26,10 +26,10 @@ RUN apk add --no-cache --virtual .build-deps \
 FROM composer:2 AS composer-deps
 WORKDIR /app
 COPY src/composer.json src/composer.lock ./
-RUN composer install --no-dev --no-scripts --no-autoloader --prefer-dist
+RUN composer install --no-dev --no-scripts --no-autoloader --prefer-dist --ignore-platform-reqs
 
 COPY src .
-RUN composer dump-autoload --optimize --classmap-authoritative
+RUN composer dump-autoload --optimize --classmap-authoritative --ignore-platform-reqs
 
 # ===========================================
 # 本番用ステージ
