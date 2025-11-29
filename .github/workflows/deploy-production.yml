@@ -35,8 +35,6 @@ jobs:
       - name: Extract metadata
         id: meta
         run: |
-          # リポジトリ名を小文字に変換（GHCRの要件）
-          echo "image_name=$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
           echo "timestamp=$(date +%Y%m%d-%H%M%S)" >> $GITHUB_OUTPUT
           echo "sha_short=$(echo ${{ github.sha }} | cut -c1-7)" >> $GITHUB_OUTPUT
 
@@ -47,9 +45,9 @@ jobs:
           file: ./deploy/docker/php/Dockerfile
           push: true
           tags: |
-            ${{ env.REGISTRY }}/${{ steps.meta.outputs.image_name }}/app:latest
-            ${{ env.REGISTRY }}/${{ steps.meta.outputs.image_name }}/app:${{ steps.meta.outputs.timestamp }}
-            ${{ env.REGISTRY }}/${{ steps.meta.outputs.image_name }}/app:${{ steps.meta.outputs.sha_short }}
+            ${{ env.REGISTRY }}/${{ github.repository }}/app:latest
+            ${{ env.REGISTRY }}/${{ github.repository }}/app:${{ steps.meta.outputs.timestamp }}
+            ${{ env.REGISTRY }}/${{ github.repository }}/app:${{ steps.meta.outputs.sha_short }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           target: prod
@@ -61,9 +59,9 @@ jobs:
           file: ./deploy/docker/nginx/Dockerfile
           push: true
           tags: |
-            ${{ env.REGISTRY }}/${{ steps.meta.outputs.image_name }}/web:latest
-            ${{ env.REGISTRY }}/${{ steps.meta.outputs.image_name }}/web:${{ steps.meta.outputs.timestamp }}
-            ${{ env.REGISTRY }}/${{ steps.meta.outputs.image_name }}/web:${{ steps.meta.outputs.sha_short }}
+            ${{ env.REGISTRY }}/${{ github.repository }}/web:latest
+            ${{ env.REGISTRY }}/${{ github.repository }}/web:${{ steps.meta.outputs.timestamp }}
+            ${{ env.REGISTRY }}/${{ github.repository }}/web:${{ steps.meta.outputs.sha_short }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -74,9 +72,9 @@ jobs:
           file: ./deploy/docker/mysql/Dockerfile
           push: true
           tags: |
-            ${{ env.REGISTRY }}/${{ steps.meta.outputs.image_name }}/db:latest
-            ${{ env.REGISTRY }}/${{ steps.meta.outputs.image_name }}/db:${{ steps.meta.outputs.timestamp }}
-            ${{ env.REGISTRY }}/${{ steps.meta.outputs.image_name }}/db:${{ steps.meta.outputs.sha_short }}
+            ${{ env.REGISTRY }}/${{ github.repository }}/db:latest
+            ${{ env.REGISTRY }}/${{ github.repository }}/db:${{ steps.meta.outputs.timestamp }}
+            ${{ env.REGISTRY }}/${{ github.repository }}/db:${{ steps.meta.outputs.sha_short }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -84,7 +82,7 @@ jobs:
         run: |
           echo "## 🚀 Images Built Successfully" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Registry:** \`${{ env.REGISTRY }}/${{ steps.meta.outputs.image_name }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Registry:** \`${{ env.REGISTRY }}/${{ github.repository }}\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Tags:**" >> $GITHUB_STEP_SUMMARY
           echo "- \`latest\`" >> $GITHUB_STEP_SUMMARY
