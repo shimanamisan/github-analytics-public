@@ -1,3 +1,63 @@
+# Dockerfile修正 - php-fpmクラッシュループ問題の解決
+
+**日付**: 2025年11月29日
+
+## 問題
+
+appコンテナが**クラッシュループ**しています（`Restarting (64)`）。
+
+ログを見ると：
+
+```
+github-analytics-backend  | Storage permissions set successfully
+github-analytics-backend  | Usage: php [-n] [-e] [-h] [-i] [-m] [-v] [-t] [-p <prefix>] ...
+```
+
+`php-fpm` のヘルプが表示されている = **不正な引数が渡されている**
+
+## 原因
+
+Dockerfileの `ENTRYPOINT` と `CMD` の組み合わせに問題があります。
+
+**問題のあったDockerfile:**
+
+```dockerfile
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
+CMD ["php-fpm"]
+```
+
+**docker-entrypoint.sh:**
+
+```bash
+exec php-fpm "$@"
+```
+
+この組み合わせだと、実際に実行されるコマンドは：
+
+```bash
+docker-entrypoint.sh php-fpm
+
+# ↓ スクリプト内で
+
+exec php-fpm php-fpm  # ← "php-fpm" が引数として渡される！
+```
+
+`php-fpm php-fpm` は無効なコマンドなのでエラーになります。
+
+## 修正
+
+**修正後のDockerfile:**
+
+```dockerfile
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
+CMD []
+```
+
+`docker-entrypoint.sh` 内で `exec php-fpm "$@"` が実行されるので、CMDは空配列にする必要があります。これにより、`php-fpm` が引数なしで正しく実行されます。
+
+## 修正版Dockerfile（完全版）
+
+```dockerfile
 # ===========================================
 # アセットビルド用ステージ
 # ===========================================
@@ -74,3 +134,19 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
 
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 CMD []
+```
+
+## 変更点
+
+| 変更前 | 変更後 |
+|:---|:---|
+| `CMD ["php-fpm"]` | `CMD []` |
+
+`docker-entrypoint.sh` 内で `exec php-fpm "$@"` が実行されるので、CMDは空配列にする必要があります。
+
+## 参考
+
+- `docker-entrypoint.sh` は `/usr/local/bin/docker-entrypoint.sh` に配置
+- スクリプト内で `exec php-fpm "$@"` を実行しているため、CMDで `php-fpm` を指定すると引数として渡されてしまう
+- 空配列 `[]` にすることで、`php-fpm` が引数なしで正しく実行される
+
