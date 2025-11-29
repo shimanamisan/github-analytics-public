@@ -102,6 +102,7 @@ services:
   scheduler:
     container_name: github-analytics-scheduler
     image: ${REGISTRY_URL}/app:${IMAGE_TAG:-latest}
+    user: "www-data:www-data"
     entrypoint: []
     command: php artisan schedule:work --verbose
     environment:
