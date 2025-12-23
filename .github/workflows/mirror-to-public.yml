@@ -1,0 +1,84 @@
+name: Mirror to Public Repository
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout private repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # 全履歴を取得
+
+      - name: Remove sensitive files
+        run: |
+          # 機密情報を含むファイルを削除
+          rm -f .env
+          rm -f deploy/prod/.env
+          rm -f deploy/prod/.env.production
+          
+          # GitHub Actions設定を削除（公開用は別途配置）
+          rm -rf .github/workflows/deploy.yml
+          rm -rf .github/workflows/mirror-to-public.yml
+          
+          # その他の機密ファイル
+          rm -f config/secrets.php
+          
+          # .gitignoreを更新（念のため）
+          echo ".env" >> .gitignore
+          echo "*.local" >> .gitignore
+
+      - name: Create README for public repo
+        run: |
+          cat > README-PUBLIC.md << 'EOF'
+          # GitHub Analytics
+
+          **注意:** このリポジトリはポートフォリオ展示用の公開ミラーです。  
+          実際の本番環境デプロイはプライベートリポジトリで管理されています。
+
+          ## 概要
+          GitHub APIを活用した分析プラットフォームです。リポジトリの統計情報やアクティビティをリアルタイムで可視化します。
+
+          ## 主な機能
+          - **Laravel基盤**: 堅牢なPHPフレームワークによる開発
+          - **Dockerコンテナ化**: 再現性の高いデプロイ環境
+          - **リアルタイム分析**: GitHub Webhookによる即時データ更新
+          - **可視化ダッシュボード**: 直感的なデータ表示
+
+          ## 技術スタック
+          - Backend: Laravel 10.x
+          - Frontend: Livewire, Tailwind CSS
+          - Database: MySQL 8.0
+          - Infrastructure: Docker, Nginx
+
+          ## 注意事項
+          このリポジトリは参照・学習目的で公開されています。  
+          デプロイ手順や環境構築の詳細はドキュメントを参照してください。
+
+          ## ライセンス
+          MIT License
+          EOF
+          
+          mv README-PUBLIC.md README.md
+
+      - name: Push to public repository
+        env:
+          PUBLIC_REPO_TOKEN: ${{ secrets.PUBLIC_REPO_TOKEN }}
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # 公開用リポジトリを追加
+          git remote add public https://x-access-token:${PUBLIC_REPO_TOKEN}@github.com/yourusername/github-analytics-public.git
+          
+          # コミット
+          git add -A
+          git commit -m "Mirror from private repo ($(date '+%Y-%m-%d %H:%M:%S'))" || echo "No changes to commit"
+          
+          # プッシュ
+          git push public main --force

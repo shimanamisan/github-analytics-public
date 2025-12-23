@@ -60,14 +60,8 @@ COPY deploy/docker/php/php-fpm.conf /usr/local/etc/php-fpm.d/zzz-www.conf
 COPY deploy/docker/php/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
-# ディレクトリ準備と権限設定
-RUN mkdir -p /var/run/php-fpm \
-      storage/logs storage/framework/cache \
-      storage/framework/sessions storage/framework/views \
-      bootstrap/cache \
-  && rm -rf bootstrap/cache/*.php \
-  && chown -R www-data:www-data /var/www/html /var/run/php-fpm \
-  && chmod -R 775 storage bootstrap/cache
+# PHP-FPMソケット用ディレクトリのみ作成（権限設定はentrypointで実行時に行う）
+RUN mkdir -p /var/run/php-fpm
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
   CMD pgrep php-fpm > /dev/null || exit 1
