@@ -13,23 +13,18 @@ jobs:
       - name: Checkout private repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # 全履歴を取得
+          fetch-depth: 0
+          persist-credentials: false  # ← ⭐ これを追加！
+          # これにより、デフォルトのGITHUB_TOKENがgit設定に残らない
 
       - name: Remove sensitive files
         run: |
-          # 機密情報を含むファイルを削除
           rm -f .env
           rm -f deploy/prod/.env
           rm -f deploy/prod/.env.production
-          
-          # GitHub Actions設定を削除（公開用は別途配置）
           rm -rf .github/workflows/deploy.yml
           rm -rf .github/workflows/mirror-to-public.yml
-          
-          # その他の機密ファイル
           rm -f config/secrets.php
-          
-          # .gitignoreを更新（念のため）
           echo ".env" >> .gitignore
           echo "*.local" >> .gitignore
 
@@ -70,11 +65,16 @@ jobs:
         env:
           PUBLIC_REPO_TOKEN: ${{ secrets.PUBLIC_REPO_TOKEN }}
         run: |
+          # Git設定
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           
-          # 公開用リポジトリを追加
-          git remote add public https://x-access-token:${PUBLIC_REPO_TOKEN}@github.com/shimanamisan/github-analytics-public.git
+          # 既存のgit認証情報をクリア（念のため）
+          git config --global --unset-all credential.helper || true
+          git config --local --unset-all credential.helper || true
+          
+          # リモート追加
+          git remote add public "https://x-access-token:${PUBLIC_REPO_TOKEN}@github.com/shimanamisan/github-analytics-public.git"
           
           # コミット
           git add -A
@@ -82,3 +82,5 @@ jobs:
           
           # プッシュ
           git push public main --force
+          
+          echo "✅ Mirror completed successfully!"
