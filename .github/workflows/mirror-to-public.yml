@@ -33,23 +33,21 @@ jobs:
           cat > README-PUBLIC.md << 'EOF'
           # GitHub Analytics
 
-          **注意:** このリポジトリはポートフォリオ展示用の公開ミラーです。  
-          実際の本番環境デプロイはプライベートリポジトリで管理されています。
-
           ## 概要
-          GitHub APIを活用した分析プラットフォームです。リポジトリの統計情報やアクティビティをリアルタイムで可視化します。
+          GitHub APIを活用した分析プラットフォームです。リポジトリの訪問数やフォロワー情報を自動収集・可視化します。
 
           ## 主な機能
-          - **Laravel基盤**: 堅牢なPHPフレームワークによる開発
-          - **Dockerコンテナ化**: 再現性の高いデプロイ環境
-          - **リアルタイム分析**: GitHub Webhookによる即時データ更新
-          - **可視化ダッシュボード**: 直感的なデータ表示
+          - **訪問数集計**: GitHub APIから定期的に訪問数データを自動取得・集計
+          - **フォロワー管理**: GitHubフォロワー情報の追跡・分析
+          - **データ可視化**: Chart.jsを使用したグラフ表示と統計情報の提供
+          - **フィルタリング**: プロジェクト・日付範囲でのデータフィルタリング
+          - **管理画面**: リポジトリ・ユーザー・データの管理機能
 
           ## 技術スタック
-          - Backend: Laravel 10.x
-          - Frontend: Livewire, Tailwind CSS
-          - Database: MySQL 8.0
-          - Infrastructure: Docker, Nginx
+          - Backend: Laravel 12.0 (PHP 8.2.29)
+          - Frontend: Livewire 3.6, TailwindCSS 4.0, Vite 7.0.4
+          - Database: MySQL 8.0.33
+          - Infrastructure: Docker, Nginx 1.18
 
           ## 注意事項
           このリポジトリは参照・学習目的で公開されています。  
