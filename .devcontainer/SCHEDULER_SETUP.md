@@ -244,37 +244,6 @@ schedulerコンテナでは以下の環境変数が設定されています：
 | ログレベル | 詳細（verbose） | 標準 |
 | 再起動ポリシー | `unless-stopped` | `unless-stopped` |
 
-## FAQ
-
-### Q1. cronファイル、supervisord、check_artisanは削除しても良い？
-A1. はい、すべて削除して問題ありません：
-- **cronファイル（h-nishihara）**: 専用コンテナで`schedule:work`を使うため不要
-- **supervisord**: PHP-FPMを直接起動するため不要（1コンテナ1プロセスの原則）
-- **check_artisan**: `docker-entrypoint.sh`に統合済み
-
-### Q2. `schedule:work`と`schedule:run`の違いは？
-A2.
-- `schedule:work`: 常駐型。無限ループで毎分自動実行。
-- `schedule:run`: 1回実行して終了。cronから毎分呼び出す従来の方式。
-
-### Q3. スケジューラーコンテナを停止したい場合は？
-A3.
-```bash
-docker compose stop scheduler
-```
-
-### Q4. 本番環境と完全に同じ動作を確認したい
-A4. 環境変数を変更してテスト：
-```bash
-docker compose run --rm \
-  -e APP_ENV=production \
-  -e APP_DEBUG=false \
-  scheduler php artisan schedule:work
-```
-
-### Q5. Supervisorを削除して問題ない？
-A5. はい、問題ありません。Dockerの「1コンテナ1プロセス」の原則に従い、PHP-FPMを直接起動する方がシンプルで保守しやすいです。将来的に複数プロセスが必要になった場合は、コンテナを分けることで対応できます。
-
 ## まとめ
 
 - 開発環境でも本番環境と同じ専用スケジューラーコンテナを使用
