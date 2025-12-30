@@ -36,6 +36,8 @@ jobs:
           ## 概要
           GitHub APIを活用した分析プラットフォームです。リポジトリの訪問数やフォロワー情報を自動収集・可視化します。
 
+          <img width="1242" height="1238" alt="Image" src="https://github.com/user-attachments/assets/caaaca33-ed49-40ea-82a6-9ecc795afbe9" />
+
           ## 主な機能
           - **訪問数集計**: GitHub APIから定期的に訪問数データを自動取得・集計
           - **フォロワー管理**: GitHubフォロワー情報の追跡・分析
