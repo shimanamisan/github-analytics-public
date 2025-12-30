@@ -3,20 +3,10 @@
 ## 概要
 
 本番環境と同じく、開発環境でも**専用のスケジューラーコンテナ**を使用します。
-従来のcron + supervisorの構成から、`schedule:work`を使った専用コンテナ方式に変更しました。
+`schedule:work`を使った専用コンテナ方式で、Laravelのスケジュールタスクを実行します。
 
-## アーキテクチャの変更
+## アーキテクチャ
 
-### Before（旧構成）
-```
-app コンテナ
-├── Supervisor（プロセス管理）
-  ├── PHP-FPM（Webリクエスト処理）
-  ├── Cron（毎分 schedule:run を実行）
-  └── check_artisan（起動時にキャッシュクリア）
-```
-
-### After（新構成）
 ```
 app コンテナ
 ├── docker-entrypoint.sh（起動スクリプト）
@@ -24,14 +14,14 @@ app コンテナ
   ├── Laravelキャッシュクリア
   └── PHP-FPM起動（フォアグラウンド）
 
-scheduler コンテナ（新規追加）
+scheduler コンテナ
 └── schedule:work（常駐型スケジューラー）
 ```
 
-**主な変更点：**
-- **Supervisor削除**：PHP-FPMを直接起動（1コンテナ1プロセスの原則に準拠）
-- **Cron削除**：専用スケジューラーコンテナで`schedule:work`を使用
-- **check_artisan削除**：`docker-entrypoint.sh`に統合してシンプル化
+**構成の特徴：**
+- **1コンテナ1プロセス**：PHP-FPMを直接起動（1コンテナ1プロセスの原則に準拠）
+- **専用スケジューラーコンテナ**：`schedule:work`を使用した常駐型スケジューラー
+- **シンプルな構成**：起動スクリプトで初期化処理を統合
 
 ## メリット
 
