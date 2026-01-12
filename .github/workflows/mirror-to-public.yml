@@ -1,0 +1,96 @@
+name: Mirror to Public Repository
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout private repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false  # ← ⭐ これを追加！
+          # これにより、デフォルトのGITHUB_TOKENがgit設定に残らない
+
+      - name: Remove sensitive files
+        run: |
+          rm -f .env
+          rm -f deploy/prod/.env
+          rm -f deploy/prod/.env.production
+          rm -rf .github/workflows/deploy.yml
+          rm -rf .github/workflows/mirror-to-public.yml
+          rm -f config/secrets.php
+          echo ".env" >> .gitignore
+          echo "*.local" >> .gitignore
+
+      - name: Create README for public repo
+        run: |
+          cat > README-PUBLIC.md << 'EOF'
+          # GitHub Analytics
+
+          ## 概要
+          GitHub APIを活用した分析プラットフォームです。リポジトリの訪問数やフォロワー情報を自動収集・可視化します。
+
+          <img width="1242" height="1238" alt="Image" src="https://github.com/user-attachments/assets/caaaca33-ed49-40ea-82a6-9ecc795afbe9" />
+
+          ## 主な機能
+          - **訪問数集計**: GitHub APIから定期的に訪問数データを自動取得・集計
+          - **フォロワー管理**: GitHubフォロワー情報の追跡・分析
+          - **データ可視化**: Chart.jsを使用したグラフ表示と統計情報の提供
+          - **フィルタリング**: プロジェクト・日付範囲でのデータフィルタリング
+          - **管理画面**: リポジトリ・ユーザー・データの管理機能
+
+          ## 技術スタック
+          - Backend: Laravel 12.0 (PHP 8.2.29)
+          - Frontend: Livewire 3.6, TailwindCSS 4.0, Vite 7.0.4
+          - Database: MySQL 8.0.33
+          - Infrastructure: Docker, Nginx 1.18
+
+          ## 注意事項
+          このリポジトリは参照・学習目的で公開されています。  
+          デプロイ手順や環境構築の詳細はドキュメントを参照してください。
+
+          ### プライベートリポジトリについて
+          この公開リポジトリは、メインで運用されている**プライベートリポジトリ**のミラーです。
+
+          **プライベートリポジトリで運用している理由：**
+          - **セキュリティ**: 環境変数（`.env`）、デプロイ設定、GitHub Actionsのシークレット情報を保護
+          - **本番環境の保護**: 実際のデプロイ先やサーバー情報などの機密情報を公開しない
+          - **ポートフォリオ展示**: コードの公開とセキュリティのバランスを取るため、公開用ミラーリポジトリを別途用意
+
+          メインのプライベートリポジトリでは、**GitHub Actions**と**Self-hosted Runner**を使用した自動デプロイが実装されています。`main`ブランチへのpushをトリガーに、Dockerイメージのビルド、GitHub Container Registryへのpush、本番サーバーでの自動デプロイが実行されます。この公開リポジトリでは、デプロイ設定や機密情報を除外した状態で同期されています。
+
+          ## ライセンス
+          MIT License
+          EOF
+          
+          mv README-PUBLIC.md README.md
+
+      - name: Push to public repository
+        env:
+          PUBLIC_REPO_TOKEN: ${{ secrets.PUBLIC_REPO_TOKEN }}
+        run: |
+          # Git設定
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # 既存のgit認証情報をクリア（念のため）
+          git config --global --unset-all credential.helper || true
+          git config --local --unset-all credential.helper || true
+          
+          # リモート追加
+          git remote add public "https://x-access-token:${PUBLIC_REPO_TOKEN}@github.com/shimanamisan/github-analytics-public.git"
+          
+          # コミット
+          git add -A
+          git commit -m "Mirror from private repo ($(date '+%Y-%m-%d %H:%M:%S'))" || echo "No changes to commit"
+          
+          # プッシュ
+          git push public main --force
+          
+          echo "✅ Mirror completed successfully!"

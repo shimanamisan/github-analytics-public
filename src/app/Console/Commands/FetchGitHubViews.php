@@ -119,7 +119,10 @@ class FetchGitHubViews extends Command
             ->orderBy('date', 'desc')
             ->first();
 
-        $lastDate = $lastRecord ? Carbon::parse($lastRecord->date) : now()->subDays(14);
+        // 最後の記録日を取得（モデルのdateカラムはCarbonオブジェクトとしてキャストされている）
+        $lastDate = $lastRecord 
+            ? ($lastRecord->date instanceof Carbon ? $lastRecord->date->copy() : Carbon::parse($lastRecord->date))
+            : now()->subDays(14);
 
         $response = Http::withHeaders([
             'Authorization' => "token {$token}",
@@ -141,6 +144,15 @@ class FetchGitHubViews extends Command
 
         $data = $response->json();
         
+        // デバッグログ：APIレスポンスの内容を記録
+        Log::debug('GitHub API レスポンス', [
+            'repository_id' => $repository->id,
+            'repository' => $repository->full_name,
+            'views_count' => isset($data['views']) ? count($data['views']) : 0,
+            'sample_view' => isset($data['views'][0]) ? $data['views'][0] : null,
+            'full_response_keys' => array_keys($data ?? [])
+        ]);
+        
         $insertedCount = 0;
         $updatedCount = 0;
 
@@ -148,17 +160,76 @@ class FetchGitHubViews extends Command
         $apiViews = [];
         if (isset($data['views'])) {
             foreach ($data['views'] as $view) {
-                $viewDate = Carbon::parse($view['timestamp'])->format('Y-m-d');
+                // タイムスタンプをUTCとしてパースし、日付文字列に変換
+                // GitHub APIはUTCでタイムスタンプを返すため、UTCのまま日付を抽出
+                $timestamp = Carbon::parse($view['timestamp'])->utc();
+                $viewDate = $timestamp->format('Y-m-d');
+                
                 $apiViews[$viewDate] = [
                     'count' => $view['count'],
                     'uniques' => $view['uniques']
                 ];
+                
+                // デバッグログ：各データの処理内容を記録（最初の3件のみ）
+                if (count($apiViews) <= 3) {
+                    Log::debug('APIデータ処理', [
+                        'repository_id' => $repository->id,
+                        'original_timestamp' => $view['timestamp'],
+                        'parsed_date' => $viewDate,
+                        'count' => $view['count'],
+                        'uniques' => $view['uniques']
+                    ]);
+                }
             }
         }
+        
+        // デバッグログ：処理対象期間とAPIデータの範囲を記録
+        Log::debug('処理対象期間の決定', [
+            'repository_id' => $repository->id,
+            'repository' => $repository->full_name,
+            'last_record_date' => $lastRecord ? $lastRecord->date->format('Y-m-d') : 'なし',
+            'last_date' => $lastDate->format('Y-m-d'),
+            'start_date' => $lastDate->copy()->addDay()->format('Y-m-d'),
+            'end_date' => ($this->option('test') ? now() : now()->subDay())->format('Y-m-d'),
+            'api_views_dates' => array_keys($apiViews),
+            'api_views_count' => count($apiViews)
+        ]);
 
         // 処理対象期間を決定（最後の記録日の翌日から昨日まで、テスト時は今日まで）
-        $startDate = $lastDate->copy()->addDay();
-        $endDate = $this->option('test') ? now() : now()->subDay();
+        $desiredStartDate = $lastDate->copy()->addDay();
+        $desiredEndDate = $this->option('test') ? now() : now()->subDay();
+        
+        // APIから取得できるデータの範囲を確認
+        $apiAvailableDates = array_keys($apiViews);
+        $apiMinDate = !empty($apiAvailableDates) ? Carbon::parse(min($apiAvailableDates)) : null;
+        $apiMaxDate = !empty($apiAvailableDates) ? Carbon::parse(max($apiAvailableDates)) : null;
+        
+        // 実際に処理できる範囲を決定
+        // 開始日は、希望する開始日とAPIが利用可能な開始日のうち、遅い方（新しい方）を使用
+        $startDate = $apiMinDate && $desiredStartDate->lt($apiMinDate) 
+            ? $apiMinDate->copy() 
+            : $desiredStartDate;
+        
+        // 終了日は、希望する終了日とAPIが利用可能な終了日のうち、早い方（古い方）を使用
+        $endDate = $apiMaxDate && $desiredEndDate->gt($apiMaxDate)
+            ? $apiMaxDate->copy()
+            : $desiredEndDate;
+        
+        // 開始日が終了日より後の場合は、処理対象期間がないためスキップ
+        if ($startDate->gt($endDate)) {
+            Log::debug('処理対象期間がありません（既に最新データがあるか、APIにデータがありません）', [
+                'repository_id' => $repository->id,
+                'repository' => $repository->full_name,
+                'last_record_date' => $lastRecord ? $lastRecord->date->format('Y-m-d') : 'なし',
+                'desired_start_date' => $desiredStartDate->format('Y-m-d'),
+                'desired_end_date' => $desiredEndDate->format('Y-m-d'),
+                'api_min_date' => $apiMinDate ? $apiMinDate->format('Y-m-d') : 'なし',
+                'api_max_date' => $apiMaxDate ? $apiMaxDate->format('Y-m-d') : 'なし',
+                'actual_start_date' => $startDate->format('Y-m-d'),
+                'actual_end_date' => $endDate->format('Y-m-d')
+            ]);
+            return ['inserted' => 0, 'updated' => 0];
+        }
 
         // 日付範囲をループして、アクセス数0の日も含めて登録
         $currentDate = $startDate->copy();
@@ -167,6 +238,17 @@ class FetchGitHubViews extends Command
             
             // GitHub APIにデータがある場合はその値を、ない場合は0を使用
             $viewData = $apiViews[$dateString] ?? ['count' => 0, 'uniques' => 0];
+            
+            // デバッグログ：保存前のデータ内容を記録（最初の3件のみ）
+            if ($insertedCount + $updatedCount < 3) {
+                Log::debug('データ保存前', [
+                    'repository_id' => $repository->id,
+                    'date' => $dateString,
+                    'view_data' => $viewData,
+                    'api_has_data' => isset($apiViews[$dateString]),
+                    'api_views_keys' => array_keys($apiViews)
+                ]);
+            }
 
             $result = GitHubView::updateOrCreate(
                 [
@@ -179,6 +261,17 @@ class FetchGitHubViews extends Command
                     'uniques' => $viewData['uniques']
                 ]
             );
+            
+            // デバッグログ：保存後のデータ内容を記録（最初の3件のみ）
+            if ($insertedCount + $updatedCount < 3) {
+                Log::debug('データ保存後', [
+                    'repository_id' => $repository->id,
+                    'date' => $dateString,
+                    'saved_count' => $result->count,
+                    'saved_uniques' => $result->uniques,
+                    'was_recently_created' => $result->wasRecentlyCreated
+                ]);
+            }
 
             if ($result->wasRecentlyCreated) {
                 $insertedCount++;

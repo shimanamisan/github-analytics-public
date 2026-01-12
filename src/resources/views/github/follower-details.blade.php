@@ -17,8 +17,8 @@
                 @auth
                     @if(auth()->user()->isAdmin())
                     <div>
-                        <label for="user_id" class="block text-sm font-medium text-gray-700 mb-2">ユーザー</label>
-                        <select name="user_id" id="user_id" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                        <label for="user_id" class="block text-sm font-medium text-gray-700 mb-1">ユーザー</label>
+                        <select name="user_id" id="user_id" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                             <option value="">すべて</option>
                             @foreach($users as $user)
                                 <option value="{{ $user->id }}" {{ request('user_id') == $user->id ? 'selected' : '' }}>
@@ -31,13 +31,13 @@
                 @endauth
                 
                 <div>
-                    <label for="search" class="block text-sm font-medium text-gray-700 mb-2">フォロワー検索</label>
-                    <input type="text" name="search" id="search" placeholder="ユーザー名または名前" value="{{ request('search') }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                    <label for="search" class="block text-sm font-medium text-gray-700 mb-1">フォロワー検索</label>
+                    <input type="text" name="search" id="search" placeholder="ユーザー名または名前" value="{{ request('search') }}" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                 </div>
                 
                 <div>
-                    <label for="sort_by" class="block text-sm font-medium text-gray-700 mb-2">並び順</label>
-                    <select name="sort_by" id="sort_by" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                    <label for="sort_by" class="block text-sm font-medium text-gray-700 mb-1">並び順</label>
+                    <select name="sort_by" id="sort_by" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                         <option value="followed_at" {{ request('sort_by') == 'followed_at' ? 'selected' : '' }}>フォロー日時</option>
                         <option value="followers" {{ request('sort_by') == 'followers' ? 'selected' : '' }}>フォロワー数</option>
                         <option value="repos" {{ request('sort_by') == 'repos' ? 'selected' : '' }}>リポジトリ数</option>
@@ -45,8 +45,8 @@
                 </div>
                 
                 <div>
-                    <label for="sort_order" class="block text-sm font-medium text-gray-700 mb-2">順序</label>
-                    <select name="sort_order" id="sort_order" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                    <label for="sort_order" class="block text-sm font-medium text-gray-700 mb-1">順序</label>
+                    <select name="sort_order" id="sort_order" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                         <option value="desc" {{ request('sort_order') == 'desc' ? 'selected' : '' }}>降順</option>
                         <option value="asc" {{ request('sort_order') == 'asc' ? 'selected' : '' }}>昇順</option>
                     </select>

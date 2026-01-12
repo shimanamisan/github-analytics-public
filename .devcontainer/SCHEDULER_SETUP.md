@@ -3,20 +3,10 @@
 ## 概要
 
 本番環境と同じく、開発環境でも**専用のスケジューラーコンテナ**を使用します。
-従来のcron + supervisorの構成から、`schedule:work`を使った専用コンテナ方式に変更しました。
+`schedule:work`を使った専用コンテナ方式で、Laravelのスケジュールタスクを実行します。
 
-## アーキテクチャの変更
+## アーキテクチャ
 
-### Before（旧構成）
-```
-app コンテナ
-├── Supervisor（プロセス管理）
-  ├── PHP-FPM（Webリクエスト処理）
-  ├── Cron（毎分 schedule:run を実行）
-  └── check_artisan（起動時にキャッシュクリア）
-```
-
-### After（新構成）
 ```
 app コンテナ
 ├── docker-entrypoint.sh（起動スクリプト）
@@ -24,14 +14,14 @@ app コンテナ
   ├── Laravelキャッシュクリア
   └── PHP-FPM起動（フォアグラウンド）
 
-scheduler コンテナ（新規追加）
+scheduler コンテナ
 └── schedule:work（常駐型スケジューラー）
 ```
 
-**主な変更点：**
-- **Supervisor削除**：PHP-FPMを直接起動（1コンテナ1プロセスの原則に準拠）
-- **Cron削除**：専用スケジューラーコンテナで`schedule:work`を使用
-- **check_artisan削除**：`docker-entrypoint.sh`に統合してシンプル化
+**構成の特徴：**
+- **1コンテナ1プロセス**：PHP-FPMを直接起動（1コンテナ1プロセスの原則に準拠）
+- **専用スケジューラーコンテナ**：`schedule:work`を使用した常駐型スケジューラー
+- **シンプルな構成**：起動スクリプトで初期化処理を統合
 
 ## メリット
 
@@ -243,37 +233,6 @@ schedulerコンテナでは以下の環境変数が設定されています：
 | APP_DEBUG | `true` | `false` |
 | ログレベル | 詳細（verbose） | 標準 |
 | 再起動ポリシー | `unless-stopped` | `unless-stopped` |
-
-## FAQ
-
-### Q1. cronファイル、supervisord、check_artisanは削除しても良い？
-A1. はい、すべて削除して問題ありません：
-- **cronファイル（h-nishihara）**: 専用コンテナで`schedule:work`を使うため不要
-- **supervisord**: PHP-FPMを直接起動するため不要（1コンテナ1プロセスの原則）
-- **check_artisan**: `docker-entrypoint.sh`に統合済み
-
-### Q2. `schedule:work`と`schedule:run`の違いは？
-A2.
-- `schedule:work`: 常駐型。無限ループで毎分自動実行。
-- `schedule:run`: 1回実行して終了。cronから毎分呼び出す従来の方式。
-
-### Q3. スケジューラーコンテナを停止したい場合は？
-A3.
-```bash
-docker compose stop scheduler
-```
-
-### Q4. 本番環境と完全に同じ動作を確認したい
-A4. 環境変数を変更してテスト：
-```bash
-docker compose run --rm \
-  -e APP_ENV=production \
-  -e APP_DEBUG=false \
-  scheduler php artisan schedule:work
-```
-
-### Q5. Supervisorを削除して問題ない？
-A5. はい、問題ありません。Dockerの「1コンテナ1プロセス」の原則に従い、PHP-FPMを直接起動する方がシンプルで保守しやすいです。将来的に複数プロセスが必要になった場合は、コンテナを分けることで対応できます。
 
 ## まとめ
 

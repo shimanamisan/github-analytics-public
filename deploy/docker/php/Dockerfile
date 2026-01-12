@@ -1,59 +1,70 @@
+# ===========================================
 # アセットビルド用ステージ
+# ===========================================
 FROM node:20-alpine AS assets
 WORKDIR /app
-# 依存関係のみ先にコピー（キャッシュ最適化）
 COPY src/package*.json ./src/
-RUN cd ./src && npm ci
+RUN cd ./src && npm ci --ignore-scripts
 COPY src ./src
 RUN cd ./src && npm run build
 
-# PHP基本ステージ
-FROM php:8.2.29-fpm-alpine AS base
-ENV TZ=Asia/Tokyo
-RUN apk add --no-cache \
-    # ビルドツール（PHP拡張コンパイルに必要）
-    autoconf g++ make linux-headers \
-    # ランタイムライブラリ
-    git icu-dev icu-libs oniguruma-dev libzip-dev unzip tzdata \
+# ===========================================
+# PHP拡張ビルド用ステージ
+# ===========================================
+FROM php:8.2.29-fpm-alpine AS php-builder
+RUN apk add --no-cache --virtual .build-deps \
+      autoconf g++ make linux-headers \
+      icu-dev oniguruma-dev libzip-dev \
   && docker-php-ext-install intl pdo_mysql mbstring zip bcmath \
   && pecl install redis \
-  && docker-php-ext-enable redis
+  && docker-php-ext-enable redis \
+  && apk del .build-deps
 
+# ===========================================
+# Composer依存関係インストール用ステージ
+# ===========================================
+FROM composer:2 AS composer-deps
+WORKDIR /app
+COPY src/composer.json src/composer.lock ./
+RUN composer install --no-dev --no-scripts --no-autoloader --prefer-dist --ignore-platform-reqs
+
+COPY src .
+RUN composer dump-autoload --optimize --classmap-authoritative --ignore-platform-reqs
+
+# ===========================================
 # 本番用ステージ
-FROM base AS prod
-ENV APP_ENV=production APP_DEBUG=0
-COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+# ===========================================
+FROM php:8.2.29-fpm-alpine AS prod
+
+ENV TZ=Asia/Tokyo \
+    APP_ENV=production \
+    APP_DEBUG=0
+
+# ランタイム依存のみインストール
+RUN apk add --no-cache icu-libs libzip oniguruma tzdata
+
+# PHP拡張をコピー
+COPY --from=php-builder /usr/local/lib/php/extensions/ /usr/local/lib/php/extensions/
+COPY --from=php-builder /usr/local/etc/php/conf.d/ /usr/local/etc/php/conf.d/
+
 WORKDIR /var/www/html
 
-# アプリケーションコードをコピー
-COPY src /var/www/html
-# ビルド済みアセットをコピー
+# アプリケーションコードとvendorをコピー
+COPY --from=composer-deps /app /var/www/html
 COPY --from=assets /app/src/public/build /var/www/html/public/build
 
-# Composer本番インストール
-RUN composer install --no-dev --optimize-autoloader --no-interaction
-
-# PHP-FPM設定ファイルをコピー（Unixソケット用）
+# PHP-FPM設定
 COPY deploy/docker/php/php-fpm.conf /usr/local/etc/php-fpm.d/zzz-www.conf
 
 # エントリーポイントスクリプトをコピー
 COPY deploy/docker/php/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
-# PHP-FPMソケット用ディレクトリ作成
-RUN mkdir -p /var/run/php-fpm \
-  && chown -R www-data:www-data /var/run/php-fpm
+# PHP-FPMソケット用ディレクトリのみ作成（権限設定はentrypointで実行時に行う）
+RUN mkdir -p /var/run/php-fpm
 
-# 既存のキャッシュを削除（実行時に再生成）
-RUN rm -rf bootstrap/cache/*.php
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD pgrep php-fpm > /dev/null || exit 1
 
-# storageとbootstrap/cacheディレクトリを明示的に作成し、権限を設定
-RUN mkdir -p storage/logs storage/framework/cache storage/framework/sessions storage/framework/views \
-  && mkdir -p bootstrap/cache \
-  && chown -R www-data:www-data /var/www/html \
-  && chmod -R 775 storage bootstrap/cache \
-  && chmod g+s storage/logs
-
-# エントリーポイントを設定（rootで実行してからwww-dataに切り替え）
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
-CMD ["-F"]
+CMD []

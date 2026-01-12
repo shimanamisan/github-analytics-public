@@ -1,6 +1,6 @@
 # 本番環境デプロイガイド
 
-このドキュメントは簡易版です。**詳細な手順は [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) を参照してください。**
+このドキュメントは簡易版です。**詳細な手順は [_docs/DEPLOYMENT_GUIDE.md](_docs/DEPLOYMENT_GUIDE.md) を参照してください。**
 
 ---
 
@@ -13,9 +13,10 @@ deploy/
 │   ├── docker-compose.import.yml   # DBインポート用
 │   ├── env.template                # 環境変数テンプレート
 │   ├── README.md                   # このファイル（簡易版）
-│   ├── DEPLOYMENT_GUIDE.md         # 詳細デプロイガイド ★推奨★
-│   ├── REDIS_MIGRATION.md          # Redis移行ガイド
-│   └── IMPLEMENTATION_SUMMARY.md   # 実装完了サマリー
+│   └── _docs/                      # ドキュメント
+│       ├── DEPLOYMENT_GUIDE.md     # 詳細デプロイガイド ★推奨★
+│       ├── REDIS_MIGRATION.md      # Redis移行ガイド
+│       └── IMPLEMENTATION_SUMMARY.md # 実装完了サマリー
 ├── scripts/                        # デプロイスクリプト
 │   └── deploy.sh                   # 自動デプロイスクリプト
 └── docker/                         # 本番用Dockerfile
@@ -50,7 +51,7 @@ git push origin main
 4. ✅ コンテナ更新・マイグレーション実行
 5. ✅ デプロイ完了
 
-**詳細**: [DEPLOYMENT_GUIDE.md - 自動デプロイ](DEPLOYMENT_GUIDE.md#🔄-運用手順)
+**詳細**: [_docs/DEPLOYMENT_GUIDE.md - 自動デプロイ](_docs/DEPLOYMENT_GUIDE.md#🔄-運用手順)
 
 ---
 
@@ -91,7 +92,7 @@ APP_KEY=  # 後で生成
 # その他の設定は env.template 参照
 ```
 
-**詳細**: [DEPLOYMENT_GUIDE.md - 初回デプロイ](DEPLOYMENT_GUIDE.md#🚀-初回デプロイ)
+**詳細**: [_docs/DEPLOYMENT_GUIDE.md - 初回デプロイ](_docs/DEPLOYMENT_GUIDE.md#🚀-初回デプロイ)
 
 #### 2. ネットワーク作成
 
@@ -153,7 +154,7 @@ docker compose logs -f
 - **キャッシュ**: データベース → Redis（約10倍高速化）
 - **キュー**: データベース → Redis（約5倍高速化）
 
-**詳細**: [REDIS_MIGRATION.md](REDIS_MIGRATION.md)
+**詳細**: [_docs/REDIS_MIGRATION.md](_docs/REDIS_MIGRATION.md)
 
 ---
 
@@ -290,15 +291,15 @@ docker compose logs app
 docker compose restart app web
 ```
 
-**詳細なトラブルシューティング**: [DEPLOYMENT_GUIDE.md - トラブルシューティング](DEPLOYMENT_GUIDE.md#🐛-トラブルシューティング)
+**詳細なトラブルシューティング**: [_docs/DEPLOYMENT_GUIDE.md - トラブルシューティング](_docs/DEPLOYMENT_GUIDE.md#🐛-トラブルシューティング)
 
 ---
 
 ## 📚 関連ドキュメント
 
-- **[DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md)** - 詳細なデプロイガイド（★推奨★）
-- **[REDIS_MIGRATION.md](REDIS_MIGRATION.md)** - Redis移行ガイド
-- **[IMPLEMENTATION_SUMMARY.md](IMPLEMENTATION_SUMMARY.md)** - 実装サマリー
+- **[_docs/DEPLOYMENT_GUIDE.md](_docs/DEPLOYMENT_GUIDE.md)** - 詳細なデプロイガイド（★推奨★）
+- **[_docs/REDIS_MIGRATION.md](_docs/REDIS_MIGRATION.md)** - Redis移行ガイド
+- **[_docs/IMPLEMENTATION_SUMMARY.md](_docs/IMPLEMENTATION_SUMMARY.md)** - 実装サマリー
 - **[env.template](env.template)** - 環境変数テンプレート
 
 ---
@@ -338,8 +339,8 @@ docker compose restart app web
 
 問題が解決しない場合：
 
-1. [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) の詳細手順を確認
-2. [REDIS_MIGRATION.md](REDIS_MIGRATION.md) でRedis関連を確認
+1. [_docs/DEPLOYMENT_GUIDE.md](_docs/DEPLOYMENT_GUIDE.md) の詳細手順を確認
+2. [_docs/REDIS_MIGRATION.md](_docs/REDIS_MIGRATION.md) でRedis関連を確認
 3. GitHub Issuesで報告（ログファイルを添付）
 
 ---
