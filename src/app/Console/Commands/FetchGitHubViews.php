@@ -144,8 +144,9 @@ class FetchGitHubViews extends Command
 
         $data = $response->json();
         
-        // デバッグログ：APIレスポンスの内容を記録
-        Log::debug('GitHub API レスポンス', [
+        // デバッグログ：APIレスポンスの内容を記録（本番環境でも確認できるようにINFOレベル）
+        $githubLogger = Log::channel('github-commands');
+        $githubLogger->info('GitHub API レスポンス', [
             'repository_id' => $repository->id,
             'repository' => $repository->full_name,
             'views_count' => isset($data['views']) ? count($data['views']) : 0,
@@ -170,9 +171,9 @@ class FetchGitHubViews extends Command
                     'uniques' => $view['uniques']
                 ];
                 
-                // デバッグログ：各データの処理内容を記録（最初の3件のみ）
+                // デバッグログ：各データの処理内容を記録（最初の3件のみ、本番環境でも確認できるようにINFOレベル）
                 if (count($apiViews) <= 3) {
-                    Log::debug('APIデータ処理', [
+                    $githubLogger->info('APIデータ処理', [
                         'repository_id' => $repository->id,
                         'original_timestamp' => $view['timestamp'],
                         'parsed_date' => $viewDate,
@@ -183,18 +184,6 @@ class FetchGitHubViews extends Command
             }
         }
         
-        // デバッグログ：処理対象期間とAPIデータの範囲を記録
-        Log::debug('処理対象期間の決定', [
-            'repository_id' => $repository->id,
-            'repository' => $repository->full_name,
-            'last_record_date' => $lastRecord ? $lastRecord->date->format('Y-m-d') : 'なし',
-            'last_date' => $lastDate->format('Y-m-d'),
-            'start_date' => $lastDate->copy()->addDay()->format('Y-m-d'),
-            'end_date' => ($this->option('test') ? now() : now()->subDay())->format('Y-m-d'),
-            'api_views_dates' => array_keys($apiViews),
-            'api_views_count' => count($apiViews)
-        ]);
-
         // 処理対象期間を決定（最後の記録日の翌日から昨日まで、テスト時は今日まで）
         $desiredStartDate = $lastDate->copy()->addDay();
         $desiredEndDate = $this->option('test') ? now() : now()->subDay();
@@ -215,9 +204,27 @@ class FetchGitHubViews extends Command
             ? $apiMaxDate->copy()
             : $desiredEndDate;
         
+        // デバッグログ：処理対象期間とAPIデータの範囲を記録（本番環境でも確認できるようにINFOレベル）
+        $githubLogger->info('処理対象期間の決定', [
+            'repository_id' => $repository->id,
+            'repository' => $repository->full_name,
+            'last_record_date' => $lastRecord ? $lastRecord->date->format('Y-m-d') : 'なし',
+            'last_date' => $lastDate->format('Y-m-d'),
+            'desired_start_date' => $desiredStartDate->format('Y-m-d'),
+            'desired_end_date' => $desiredEndDate->format('Y-m-d'),
+            'api_min_date' => $apiMinDate ? $apiMinDate->format('Y-m-d') : 'なし',
+            'api_max_date' => $apiMaxDate ? $apiMaxDate->format('Y-m-d') : 'なし',
+            'actual_start_date' => $startDate->format('Y-m-d'),
+            'actual_end_date' => $endDate->format('Y-m-d'),
+            'api_views_dates' => array_keys($apiViews),
+            'api_views_count' => count($apiViews)
+        ]);
+        
         // 開始日が終了日より後の場合は、処理対象期間がないためスキップ
         if ($startDate->gt($endDate)) {
-            Log::debug('処理対象期間がありません（既に最新データがあるか、APIにデータがありません）', [
+            // 本番環境でも確認できるようにINFOレベルでログ出力
+            $githubLogger = Log::channel('github-commands');
+            $githubLogger->info('処理対象期間がありません（既に最新データがあるか、APIにデータがありません）', [
                 'repository_id' => $repository->id,
                 'repository' => $repository->full_name,
                 'last_record_date' => $lastRecord ? $lastRecord->date->format('Y-m-d') : 'なし',
@@ -239,9 +246,9 @@ class FetchGitHubViews extends Command
             // GitHub APIにデータがある場合はその値を、ない場合は0を使用
             $viewData = $apiViews[$dateString] ?? ['count' => 0, 'uniques' => 0];
             
-            // デバッグログ：保存前のデータ内容を記録（最初の3件のみ）
+            // デバッグログ：保存前のデータ内容を記録（最初の3件のみ、本番環境でも確認できるようにINFOレベル）
             if ($insertedCount + $updatedCount < 3) {
-                Log::debug('データ保存前', [
+                $githubLogger->info('データ保存前', [
                     'repository_id' => $repository->id,
                     'date' => $dateString,
                     'view_data' => $viewData,
@@ -262,9 +269,9 @@ class FetchGitHubViews extends Command
                 ]
             );
             
-            // デバッグログ：保存後のデータ内容を記録（最初の3件のみ）
+            // デバッグログ：保存後のデータ内容を記録（最初の3件のみ、本番環境でも確認できるようにINFOレベル）
             if ($insertedCount + $updatedCount < 3) {
-                Log::debug('データ保存後', [
+                $githubLogger->info('データ保存後', [
                     'repository_id' => $repository->id,
                     'date' => $dateString,
                     'saved_count' => $result->count,
