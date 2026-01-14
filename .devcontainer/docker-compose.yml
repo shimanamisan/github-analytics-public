@@ -103,6 +103,8 @@ services:
     container_name: github-analytics-scheduler
     image: github-analytics-backend:1.0
     working_dir: /workspace/src
+    # www-dataユーザーで実行（ログファイルのパーミッション問題を回避）
+    user: "www-data:www-data"
     # ENTRYPOINTをスキップして直接コマンドを実行
     entrypoint: []
     command: php artisan schedule:work --verbose

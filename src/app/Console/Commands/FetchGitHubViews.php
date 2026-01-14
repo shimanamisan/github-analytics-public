@@ -17,7 +17,7 @@ class FetchGitHubViews extends Command
      *
      * @var string
      */
-    protected $signature = 'github:fetch-views {--repository= : 特定のリポジトリIDを指定} {--test : テスト実行}';
+    protected $signature = 'github:fetch-views {--repository= : 特定のリポジトリIDを指定} {--test : テスト実行} {--force : 過去14日分を強制的に再取得}';
 
     /**
      * The console command description.
@@ -34,8 +34,20 @@ class FetchGitHubViews extends Command
         // カスタムログチャンネルを使用
         $githubLogger = Log::channel('github-commands');
         
-        $githubLogger->info('GitHub訪問数データの取得を開始します...');
-        $this->info('GitHub訪問数データの取得を開始します...');
+        $forceMode = $this->option('force');
+        $testMode = $this->option('test');
+
+        $modeInfo = [];
+        if ($forceMode) {
+            $modeInfo[] = '強制再取得モード';
+        }
+        if ($testMode) {
+            $modeInfo[] = 'テストモード';
+        }
+        $modeStr = !empty($modeInfo) ? ' (' . implode(', ', $modeInfo) . ')' : '';
+
+        $githubLogger->info('GitHub訪問数データの取得を開始します...' . $modeStr);
+        $this->info('GitHub訪問数データの取得を開始します...' . $modeStr);
 
         // 特定のリポジトリが指定されている場合
         if ($repositoryId = $this->option('repository')) {
@@ -92,7 +104,8 @@ class FetchGitHubViews extends Command
             'total_inserted' => $totalInserted,
             'total_updated' => $totalUpdated,
             'error_count' => $errorCount,
-            'is_test' => $this->option('test')
+            'is_test' => $this->option('test'),
+            'is_force' => $this->option('force')
         ]);
 
         return $errorCount > 0 ? 1 : 0;
@@ -119,10 +132,17 @@ class FetchGitHubViews extends Command
             ->orderBy('date', 'desc')
             ->first();
 
-        // 最後の記録日を取得（モデルのdateカラムはCarbonオブジェクトとしてキャストされている）
-        $lastDate = $lastRecord 
-            ? ($lastRecord->date instanceof Carbon ? $lastRecord->date->copy() : Carbon::parse($lastRecord->date))
-            : now()->subDays(14);
+        // --forceオプションが指定された場合は、過去14日分を強制的に再取得
+        // そうでない場合は、最後の記録日の翌日から取得
+        if ($this->option('force')) {
+            // 強制再取得モード: 14日前から取得（GitHub APIの制限）
+            $lastDate = now()->subDays(15);
+        } else {
+            // 通常モード: 最後の記録日を取得（モデルのdateカラムはCarbonオブジェクトとしてキャストされている）
+            $lastDate = $lastRecord
+                ? ($lastRecord->date instanceof Carbon ? $lastRecord->date->copy() : Carbon::parse($lastRecord->date))
+                : now()->subDays(14);
+        }
 
         $response = Http::withHeaders([
             'Authorization' => "token {$token}",
@@ -208,6 +228,7 @@ class FetchGitHubViews extends Command
         $githubLogger->info('処理対象期間の決定', [
             'repository_id' => $repository->id,
             'repository' => $repository->full_name,
+            'force_mode' => $this->option('force'),
             'last_record_date' => $lastRecord ? $lastRecord->date->format('Y-m-d') : 'なし',
             'last_date' => $lastDate->format('Y-m-d'),
             'desired_start_date' => $desiredStartDate->format('Y-m-d'),
