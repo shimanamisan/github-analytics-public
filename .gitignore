@@ -31,4 +31,5 @@ auth.json
 
 # other
 supervisord.pid
-.DS_Store
+.DS_Store.env
+*.local

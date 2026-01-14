@@ -1,7 +1,36 @@
-# GitHub Analytics Laravel
+# GitHub Analytics
 
-# 構成図
+## 概要
+GitHub APIを活用した分析プラットフォームです。リポジトリの訪問数やフォロワー情報を自動収集・可視化します。
 
-![architecture](./_docs/assets/github_analytics_architecture.svg)
+<img width="1242" height="1238" alt="Image" src="https://github.com/user-attachments/assets/caaaca33-ed49-40ea-82a6-9ecc795afbe9" />
 
-# Laravelのインストール
+## 主な機能
+- **訪問数集計**: GitHub APIから定期的に訪問数データを自動取得・集計
+- **フォロワー管理**: GitHubフォロワー情報の追跡・分析
+- **データ可視化**: Chart.jsを使用したグラフ表示と統計情報の提供
+- **フィルタリング**: プロジェクト・日付範囲でのデータフィルタリング
+- **管理画面**: リポジトリ・ユーザー・データの管理機能
+
+## 技術スタック
+- Backend: Laravel 12.0 (PHP 8.2.29)
+- Frontend: Livewire 3.6, TailwindCSS 4.0, Vite 7.0.4
+- Database: MySQL 8.0.33
+- Infrastructure: Docker, Nginx 1.18
+
+## 注意事項
+このリポジトリは参照・学習目的で公開されています。  
+デプロイ手順や環境構築の詳細はドキュメントを参照してください。
+
+### プライベートリポジトリについて
+この公開リポジトリは、メインで運用されている**プライベートリポジトリ**のミラーです。
+
+**プライベートリポジトリで運用している理由：**
+- **セキュリティ**: 環境変数（`.env`）、デプロイ設定、GitHub Actionsのシークレット情報を保護
+- **本番環境の保護**: 実際のデプロイ先やサーバー情報などの機密情報を公開しない
+- **ポートフォリオ展示**: コードの公開とセキュリティのバランスを取るため、公開用ミラーリポジトリを別途用意
+
+メインのプライベートリポジトリでは、**GitHub Actions**と**Self-hosted Runner**を使用した自動デプロイが実装されています。`main`ブランチへのpushをトリガーに、Dockerイメージのビルド、GitHub Container Registryへのpush、本番サーバーでの自動デプロイが実行されます。この公開リポジトリでは、デプロイ設定や機密情報を除外した状態で同期されています。
+
+## ライセンス
+MIT License
